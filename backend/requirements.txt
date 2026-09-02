@@ -1,6 +1,7 @@
 fastapi
 uvicorn[standard]
 pymongo
+motor
 dnspython
 python-dotenv
 pydantic
