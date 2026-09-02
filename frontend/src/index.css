@@ -1,0 +1,140 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+@layer base {
+    :root {
+        --background: 210 25% 98%;
+        --foreground: 222 47% 11%;
+        --card: 0 0% 100%;
+        --card-foreground: 222 47% 11%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 222 47% 11%;
+
+        --primary: 186 78% 28%;
+        --primary-foreground: 0 0% 100%;
+
+        --secondary: 210 20% 96%;
+        --secondary-foreground: 222 47% 11%;
+
+        --muted: 210 20% 96%;
+        --muted-foreground: 215 16% 40%;
+
+        --accent: 186 55% 92%;
+        --accent-foreground: 186 78% 18%;
+
+        --border: 214 20% 90%;
+        --input: 214 20% 90%;
+        --ring: 186 78% 28%;
+
+        --destructive: 0 72% 51%;
+        --destructive-foreground: 0 0% 100%;
+
+        --radius: 0.75rem;
+
+        --chart-1: 186 78% 28%;
+        --chart-2: 205 78% 40%;
+        --chart-3: 160 55% 34%;
+        --chart-4: 35 85% 55%;
+        --chart-5: 0 72% 51%;
+    }
+
+    .dark {
+        --background: 222 47% 7%;
+        --foreground: 210 40% 98%;
+        --card: 222 47% 9%;
+        --card-foreground: 210 40% 98%;
+        --popover: 222 47% 9%;
+        --popover-foreground: 210 40% 98%;
+
+        --primary: 186 70% 45%;
+        --primary-foreground: 222 47% 7%;
+
+        --secondary: 217 20% 16%;
+        --secondary-foreground: 210 40% 98%;
+
+        --muted: 217 20% 16%;
+        --muted-foreground: 215 20% 70%;
+
+        --accent: 186 35% 18%;
+        --accent-foreground: 186 70% 85%;
+
+        --border: 217 20% 18%;
+        --input: 217 20% 18%;
+        --ring: 186 70% 45%;
+
+        --destructive: 0 62% 40%;
+        --destructive-foreground: 210 40% 98%;
+
+        --chart-1: 186 70% 55%;
+        --chart-2: 205 78% 55%;
+        --chart-3: 160 55% 55%;
+        --chart-4: 35 85% 60%;
+        --chart-5: 0 72% 60%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    html, body, #root {
+        height: 100%;
+    }
+
+    body {
+        margin: 0;
+        font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        @apply bg-background text-foreground;
+    }
+
+    ::selection {
+        background-color: hsl(var(--accent));
+        color: hsl(var(--accent-foreground));
+    }
+}
+
+@layer components {
+    .kbd {
+        @apply inline-flex items-center rounded-md border border-border bg-secondary px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground;
+    }
+
+    /* Custom scrollbar (subtle) */
+    .scroll-thin::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    .scroll-thin::-webkit-scrollbar-thumb {
+        background: hsl(var(--border));
+        border-radius: 6px;
+    }
+    .scroll-thin::-webkit-scrollbar-thumb:hover {
+        background: hsl(var(--muted-foreground) / 0.4);
+    }
+
+    /* Print styles for labels */
+    @media print {
+        body * { visibility: hidden; }
+        .print-area, .print-area * { visibility: visible; }
+        .print-area {
+            position: absolute;
+            left: 0; top: 0;
+            width: 100%;
+            padding: 0;
+            background: white;
+            color: black;
+        }
+        .no-print { display: none !important; }
+    }
+}
+
+@layer base {
+    [data-debug-wrapper="true"] {
+        display: contents !important;
+    }
+}

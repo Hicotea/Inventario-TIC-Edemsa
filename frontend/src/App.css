@@ -1,0 +1,4 @@
+/* Minimal app-level overrides. Layout handled by AppShell. */
+#root {
+    min-height: 100vh;
+}

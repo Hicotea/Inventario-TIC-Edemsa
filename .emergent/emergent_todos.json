@@ -1,0 +1,22 @@
+[
+  {
+    "content": "Smoke test: screenshot Login + Dashboard to verify UI renders",
+    "status": "completed"
+  },
+  {
+    "content": "Run backend E2E testing (auth, atomic stock, CRUD, reports, audit, import/export)",
+    "status": "completed"
+  },
+  {
+    "content": "Run frontend E2E testing (login flow, navigation, product/movement/scanner UX)",
+    "status": "completed"
+  },
+  {
+    "content": "Fix any P0/P1 bugs from testing and re-verify",
+    "status": "completed"
+  },
+  {
+    "content": "Write comprehensive README.md (architecture, setup, credentials, features)",
+    "status": "completed"
+  }
+]
