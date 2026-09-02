@@ -8,6 +8,7 @@ import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 import PageHeader from "@/components/PageHeader";
 import { api } from "@/lib/api";
+import { tAlertKind } from "@/lib/format";
 
 const KIND_ICONS = {
   low_stock: AlertTriangle,
@@ -25,7 +26,7 @@ function AlertRow({ a }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="font-medium truncate">{a.product_name}</span>
-          <StatusBadge status={sev} label={a.kind.replace(/_/g, " ")} />
+          <StatusBadge status={sev} label={tAlertKind(a.kind)} />
         </div>
         <div className="text-xs text-muted-foreground truncate">{a.message}</div>
       </div>
@@ -53,23 +54,23 @@ export default function Alerts() {
   return (
     <div>
       <PageHeader
-        title="Alerts"
-        description="Items requiring attention: low/out of stock, missing codes, stale."
-        breadcrumb={[{ label: "Home", to: "/" }, { label: "Alerts" }]}
+        title="Alertas"
+        description="Elementos que requieren atención: stock bajo/agotado, sin código o sin movimientos."
+        breadcrumb={[{ label: "Inicio", to: "/" }, { label: "Alertas" }]}
       />
       <Card className="p-4">
         <Tabs defaultValue="all">
           <TabsList>
-            <TabsTrigger value="all">All ({items.length})</TabsTrigger>
-            <TabsTrigger value="out_of_stock">Out ({groups.out_of_stock.length})</TabsTrigger>
-            <TabsTrigger value="low_stock">Low ({groups.low_stock.length})</TabsTrigger>
-            <TabsTrigger value="missing_code">Missing code ({groups.missing_code.length})</TabsTrigger>
-            <TabsTrigger value="no_movement">No movement ({groups.no_movement.length})</TabsTrigger>
+            <TabsTrigger value="all">Todas ({items.length})</TabsTrigger>
+            <TabsTrigger value="out_of_stock">Agotadas ({groups.out_of_stock.length})</TabsTrigger>
+            <TabsTrigger value="low_stock">Stock bajo ({groups.low_stock.length})</TabsTrigger>
+            <TabsTrigger value="missing_code">Sin código ({groups.missing_code.length})</TabsTrigger>
+            <TabsTrigger value="no_movement">Sin movimiento ({groups.no_movement.length})</TabsTrigger>
           </TabsList>
           {Object.entries(groups).map(([k, list]) => (
             <TabsContent key={k} value={k} className="mt-3 grid gap-2">
               {loading ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />) :
-                list.length === 0 ? <EmptyState title="Nothing here" description="No alerts in this category." /> :
+                list.length === 0 ? <EmptyState title="Sin alertas en esta categoría" description="Todo está en orden por ahora." /> :
                 list.map(a => <AlertRow key={a.id} a={a} />)}
             </TabsContent>
           ))}

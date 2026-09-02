@@ -44,7 +44,7 @@ export function AuthProvider({ children }) {
       setPermissions(permRes.data?.permissions || []);
       return { ok: true };
     } catch (e) {
-      showError(e, "Invalid email or password.");
+      showError(e, "Correo o contraseña inválidos.");
       return { ok: false, error: e?.friendlyMessage };
     }
   }, []);
@@ -72,6 +72,6 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  if (!ctx) throw new Error("useAuth debe usarse dentro de <AuthProvider>");
   return ctx;
 }

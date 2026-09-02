@@ -12,6 +12,7 @@ import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
 import { api, showError, showSuccess } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { formatDate, tCountStatus } from "@/lib/format";
 
 export default function Counts() {
   const [items, setItems] = useState([]);
@@ -37,7 +38,7 @@ export default function Counts() {
     setSaving(true);
     try {
       const { data } = await api.post("/counts", { name, location_id: locationId || null });
-      showSuccess("Session created.");
+      showSuccess("Sesión creada.");
       setOpen(false); setName(""); setLocationId("");
       nav(`/counts/${data.id}`);
     } catch (e) { showError(e); } finally { setSaving(false); }
@@ -45,12 +46,12 @@ export default function Counts() {
 
   return (
     <div>
-      <PageHeader title="Physical counts" description="Reconcile system stock with what's physically on the shelf."
-        breadcrumb={[{ label: "Home", to: "/" }, { label: "Physical counts" }]}
-        actions={canWrite && <Button onClick={() => setOpen(true)}><Plus size={16} className="mr-2" />New session</Button>} />
+      <PageHeader title="Inventario físico" description="Concilie el stock del sistema con lo que está físicamente en la estantería."
+        breadcrumb={[{ label: "Inicio", to: "/" }, { label: "Inventario físico" }]}
+        actions={canWrite && <Button onClick={() => setOpen(true)}><Plus size={16} className="mr-2" />Nueva sesión</Button>} />
 
-      {loading ? <Card className="p-4">Loading…</Card> : items.length === 0 ? (
-        <EmptyState icon={ClipboardList} title="No counting sessions yet" description="Create one to start reconciling stock." action={canWrite && <Button onClick={() => setOpen(true)}>New session</Button>} />
+      {loading ? <Card className="p-4">Cargando…</Card> : items.length === 0 ? (
+        <EmptyState icon={ClipboardList} title="Aún no hay sesiones de conteo" description="Cree una para iniciar la conciliación de stock." action={canWrite && <Button onClick={() => setOpen(true)}>Nueva sesión</Button>} />
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {items.map(s => (
@@ -58,13 +59,13 @@ export default function Counts() {
               <div className="flex items-start justify-between">
                 <div>
                   <Link to={`/counts/${s.id}`} className="font-display font-semibold hover:underline">{s.name}</Link>
-                  <div className="mt-1 text-xs text-muted-foreground">{s.location_name || "All locations"}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">{s.location_name || "Todas las ubicaciones"}</div>
                 </div>
-                <Badge className={s.status === "open" ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-slate-100 text-slate-700 border-slate-200"}>{s.status}</Badge>
+                <Badge className={s.status === "open" ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-slate-100 text-slate-700 border-slate-200"}>{tCountStatus(s.status)}</Badge>
               </div>
               <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                <span>{s.items?.length || 0} items scanned</span>
-                <span>{new Date(s.created_at).toLocaleDateString()}</span>
+                <span>{s.items?.length || 0} ítem{(s.items?.length || 0) === 1 ? "" : "s"} contado{(s.items?.length || 0) === 1 ? "" : "s"}</span>
+                <span>{formatDate(s.created_at)}</span>
               </div>
             </Card>
           ))}
@@ -73,20 +74,20 @@ export default function Counts() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>New counting session</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Nueva sesión de conteo</DialogTitle></DialogHeader>
           <div className="grid gap-3">
-            <div className="grid gap-1.5"><Label>Name</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="Q4 2025 physical count" autoFocus /></div>
+            <div className="grid gap-1.5"><Label>Nombre</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="Conteo físico Q4 2026" autoFocus /></div>
             <div className="grid gap-1.5">
-              <Label>Location</Label>
+              <Label>Ubicación</Label>
               <Select value={locationId || "__all__"} onValueChange={v => setLocationId(v === "__all__" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="All locations" /></SelectTrigger>
-                <SelectContent><SelectItem value="__all__">All locations</SelectItem>{locs.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
+                <SelectTrigger><SelectValue placeholder="Todas las ubicaciones" /></SelectTrigger>
+                <SelectContent><SelectItem value="__all__">Todas las ubicaciones</SelectItem>{locs.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={create} disabled={saving || !name.trim()}>{saving ? <><Loader2 className="mr-2 animate-spin" size={16}/>Creating…</> : "Create session"}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={create} disabled={saving || !name.trim()}>{saving ? <><Loader2 className="mr-2 animate-spin" size={16}/>Creando…</> : "Crear sesión"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

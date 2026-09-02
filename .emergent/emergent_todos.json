@@ -1,22 +1,30 @@
 [
   {
-    "content": "Smoke test: screenshot Login + Dashboard to verify UI renders",
+    "content": "Create i18n/locale helper (format.js) for enum translation, dates, numbers",
     "status": "completed"
   },
   {
-    "content": "Run backend E2E testing (auth, atomic stock, CRUD, reports, audit, import/export)",
+    "content": "Translate frontend layout (Sidebar, Topbar, StatusBadge, App title, index.html) + rebrand to EDEMSA TIC INVENTARIO",
     "status": "completed"
   },
   {
-    "content": "Run frontend E2E testing (login flow, navigation, product/movement/scanner UX)",
+    "content": "Translate all 20 pages (Login, Dashboard, Products, Movements, Scanner, Alerts, Counts, Reports, Import, Users, Audit, Settings, Master data)",
     "status": "completed"
   },
   {
-    "content": "Fix any P0/P1 bugs from testing and re-verify",
-    "status": "completed"
+    "content": "Translate backend user-facing strings (error messages, PDF titles, export headers, RBAC messages)",
+    "status": "in_progress"
   },
   {
-    "content": "Write comprehensive README.md (architecture, setup, credentials, features)",
-    "status": "completed"
+    "content": "Add seed migration to rename existing DB data (categories, locations, suppliers, products) into Spanish keeping IDs",
+    "status": "pending"
+  },
+  {
+    "content": "Restart services, verify frontend compiles, take screenshots to confirm Spanish UI + no layout overflow",
+    "status": "pending"
+  },
+  {
+    "content": "Run E2E regression test to confirm functionality unchanged",
+    "status": "pending"
   }
 ]

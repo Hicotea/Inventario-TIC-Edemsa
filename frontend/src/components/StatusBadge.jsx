@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { tStatus } from "@/lib/format";
 
 const STYLES = {
   available: "bg-emerald-50 text-emerald-800 border-emerald-200",
@@ -22,17 +23,6 @@ const DOTS = {
   error: "bg-rose-500",
 };
 
-const LABELS = {
-  available: "Available",
-  low: "Low",
-  out: "Out",
-  discontinued: "Discontinued",
-  inactive: "Inactive",
-  info: "Info",
-  warn: "Warning",
-  error: "Critical",
-};
-
 export default function StatusBadge({ status = "available", className, label }) {
   const s = STYLES[status] || STYLES.available;
   const dot = DOTS[status] || DOTS.available;
@@ -45,7 +35,7 @@ export default function StatusBadge({ status = "available", className, label }) 
       )}
     >
       <span className={cn("h-1.5 w-1.5 rounded-full", dot)} />
-      {label ?? LABELS[status] ?? status}
+      {label ?? tStatus(status)}
     </span>
   );
 }

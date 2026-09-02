@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, Search, Download, X, Filter } from "lucide-react";
+import { Plus, Search, Download, X, Filter, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import LoadingTable from "@/components/LoadingTable";
 import { api, showError, showSuccess, API } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { TID } from "@/lib/testIds";
+import { formatNumber, tStatus } from "@/lib/format";
 
 function useMaster() {
   const [cats, setCats] = useState([]);
@@ -50,10 +51,10 @@ export default function Products() {
 
   const activeChips = useMemo(() => {
     const chips = [];
-    if (category) chips.push({ key: "category", label: `Category: ${master.cats.find(c => c.id === category)?.name || "—"}`, clear: () => setCategory("") });
-    if (brand) chips.push({ key: "brand", label: `Brand: ${master.brands.find(b => b.id === brand)?.name || "—"}`, clear: () => setBrand("") });
-    if (location) chips.push({ key: "location", label: `Location: ${master.locs.find(l => l.id === location)?.name || "—"}`, clear: () => setLocation("") });
-    if (status) chips.push({ key: "status", label: `Status: ${status}`, clear: () => setStatus("") });
+    if (category) chips.push({ key: "category", label: `Categoría: ${master.cats.find(c => c.id === category)?.name || "—"}`, clear: () => setCategory("") });
+    if (brand) chips.push({ key: "brand", label: `Marca: ${master.brands.find(b => b.id === brand)?.name || "—"}`, clear: () => setBrand("") });
+    if (location) chips.push({ key: "location", label: `Ubicación: ${master.locs.find(l => l.id === location)?.name || "—"}`, clear: () => setLocation("") });
+    if (status) chips.push({ key: "status", label: `Estado: ${tStatus(status)}`, clear: () => setStatus("") });
     return chips;
   }, [category, brand, location, status, master]);
 
@@ -104,29 +105,42 @@ export default function Products() {
       if (location) url.searchParams.set("location_id", location);
       if (status) url.searchParams.set("status", status);
       const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) throw new Error("Export failed");
+      if (!res.ok) throw new Error("Falló la exportación");
       const blob = await res.blob();
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = `inventory.${format}`;
+      link.download = `inventario.${format}`;
       link.click();
-      showSuccess(`Exported ${items.length} products.`);
-    } catch (e) { showError(e, "Export failed."); }
+      showSuccess(`Se exportaron ${items.length} productos.`);
+    } catch (e) { showError(e, "Falló la exportación."); }
   };
 
   const clearAll = () => { setQ(""); setCategory(""); setBrand(""); setLocation(""); setStatus(""); };
 
+  const handleDelete = async (e, id) => {
+    e.stopPropagation();
+    if (window.confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+      try {
+        await api.delete(`/products/${id}`);
+        showSuccess("Producto eliminado correctamente.");
+        reload();
+      } catch (err) {
+        showError(err, "No se pudo eliminar el producto.");
+      }
+    }
+  };
+
   return (
     <div>
       <PageHeader
-        title="Products"
-        description="Track SKUs, stock levels and locations."
-        breadcrumb={[{ label: "Home", to: "/" }, { label: "Products" }]}
+        title="Productos"
+        description="Administre SKUs, niveles de stock y ubicaciones."
+        breadcrumb={[{ label: "Inicio", to: "/" }, { label: "Productos" }]}
         actions={
           <>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" data-testid={TID.productsExport}><Download size={16} className="mr-2"/>Export</Button>
+                <Button variant="outline" data-testid={TID.productsExport}><Download size={16} className="mr-2"/>Exportar</Button>
               </PopoverTrigger>
               <PopoverContent align="end" className="w-44 p-1">
                 <button className="w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent" onClick={() => exportFile("xlsx")}>Excel (.xlsx)</button>
@@ -136,7 +150,7 @@ export default function Products() {
             </Popover>
             {canCreate && (
               <Button onClick={() => navigate("/products/new")} data-testid={TID.productsCreate}>
-                <Plus size={16} className="mr-2" /> New product
+                <Plus size={16} className="mr-2" /> Nuevo producto
               </Button>
             )}
           </>
@@ -151,40 +165,41 @@ export default function Products() {
               data-testid={TID.productsSearch}
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search by name, SKU, barcode or QR…"
+              placeholder="Buscar por nombre, SKU, código de barras o QR…"
               className="pl-9 h-10"
+              aria-label="Buscar productos"
             />
           </div>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             <Select value={category || "__all__"} onValueChange={(v) => setCategory(v === "__all__" ? "" : v)}>
-              <SelectTrigger className="h-10" data-testid="products-filter-category"><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectTrigger className="h-10" data-testid="products-filter-category"><SelectValue placeholder="Categoría" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">All categories</SelectItem>
+                <SelectItem value="__all__">Todas las categorías</SelectItem>
                 {master.cats.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={brand || "__all__"} onValueChange={(v) => setBrand(v === "__all__" ? "" : v)}>
-              <SelectTrigger className="h-10" data-testid="products-filter-brand"><SelectValue placeholder="Brand" /></SelectTrigger>
+              <SelectTrigger className="h-10" data-testid="products-filter-brand"><SelectValue placeholder="Marca" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">All brands</SelectItem>
+                <SelectItem value="__all__">Todas las marcas</SelectItem>
                 {master.brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={location || "__all__"} onValueChange={(v) => setLocation(v === "__all__" ? "" : v)}>
-              <SelectTrigger className="h-10" data-testid="products-filter-location"><SelectValue placeholder="Location" /></SelectTrigger>
+              <SelectTrigger className="h-10" data-testid="products-filter-location"><SelectValue placeholder="Ubicación" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">All locations</SelectItem>
+                <SelectItem value="__all__">Todas las ubicaciones</SelectItem>
                 {master.locs.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={status || "__all__"} onValueChange={(v) => setStatus(v === "__all__" ? "" : v)}>
-              <SelectTrigger className="h-10" data-testid="products-filter-status"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectTrigger className="h-10" data-testid="products-filter-status"><SelectValue placeholder="Estado" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">All statuses</SelectItem>
-                <SelectItem value="available">Available</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="out">Out</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="__all__">Todos los estados</SelectItem>
+                <SelectItem value="available">Disponible</SelectItem>
+                <SelectItem value="low">Stock bajo</SelectItem>
+                <SelectItem value="out">Agotado</SelectItem>
+                <SelectItem value="inactive">Inactivo</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -196,10 +211,10 @@ export default function Products() {
             {activeChips.map(c => (
               <Badge key={c.key} variant="secondary" className="gap-1 pr-1">
                 {c.label}
-                <button onClick={c.clear} className="ml-1 rounded-full p-0.5 hover:bg-background"><X size={12} /></button>
+                <button onClick={c.clear} aria-label="Quitar filtro" className="ml-1 rounded-full p-0.5 hover:bg-background"><X size={12} /></button>
               </Badge>
             ))}
-            <button onClick={clearAll} className="text-xs text-primary hover:underline">Clear all</button>
+            <button onClick={clearAll} className="text-xs text-primary hover:underline">Limpiar filtros</button>
           </div>
         )}
       </Card>
@@ -207,9 +222,9 @@ export default function Products() {
       <div className="mt-4">
         {loading ? <LoadingTable rows={8} cols={7} /> : items.length === 0 ? (
           <EmptyState
-            title="No products match your filters"
-            description="Try clearing filters or adding a new product."
-            action={canCreate ? <Button onClick={() => navigate("/products/new")}><Plus size={16} className="mr-2" />New product</Button> : null}
+            title="Ningún producto coincide con los filtros"
+            description="Pruebe limpiando los filtros o cree un nuevo producto."
+            action={canCreate ? <Button onClick={() => navigate("/products/new")}><Plus size={16} className="mr-2" />Nuevo producto</Button> : null}
           />
         ) : (
           <Card className="overflow-hidden">
@@ -217,13 +232,14 @@ export default function Products() {
               <Table data-testid={TID.productsTable}>
                 <TableHeader>
                   <TableRow className="bg-muted/40">
-                    <TableHead>Product</TableHead>
+                    <TableHead>Producto</TableHead>
                     <TableHead>SKU</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Location</TableHead>
+                    <TableHead>Categoría</TableHead>
+                    <TableHead>Ubicación</TableHead>
                     <TableHead className="text-right">Stock</TableHead>
-                    <TableHead className="text-right">Min</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Mínimo</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -236,17 +252,30 @@ export default function Products() {
                       <TableCell className="font-mono text-xs">{p.sku}</TableCell>
                       <TableCell>{p.category_name || <span className="text-muted-foreground">—</span>}</TableCell>
                       <TableCell>{p.location_name || <span className="text-muted-foreground">—</span>}</TableCell>
-                      <TableCell className="text-right tabular-nums">{p.stock}</TableCell>
-                      <TableCell className="text-right tabular-nums text-muted-foreground">{p.min_stock}</TableCell>
+                      <TableCell className="text-right tabular-nums">{formatNumber(p.stock, { maximumFractionDigits: 0 })}</TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">{formatNumber(p.min_stock, { maximumFractionDigits: 0 })}</TableCell>
                       <TableCell><StatusBadge status={p.status} /></TableCell>
+                      <TableCell className="text-right">
+                        {canCreate && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive h-8 w-8 p-0"
+                            onClick={(e) => handleDelete(e, p.id)}
+                            title="Eliminar producto"
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
             <div className="flex items-center justify-between border-t border-border px-4 py-2 text-xs text-muted-foreground">
-              <span>Showing {items.length} products</span>
-              {canCreate && <Link to="/products/new" className="text-primary hover:underline">Add a new product →</Link>}
+              <span>Mostrando {items.length} producto{items.length === 1 ? "" : "s"}</span>
+              {canCreate && <Link to="/products/new" className="text-primary hover:underline">Agregar un nuevo producto →</Link>}
             </div>
           </Card>
         )}

@@ -1,4 +1,4 @@
-"""Main FastAPI app for IT Inventory Management System."""
+"""Aplicación FastAPI principal — EDEMSA TIC INVENTARIO."""
 import logging
 import os
 from pathlib import Path
@@ -29,14 +29,14 @@ from routes_settings import router as settings_router  # noqa: E402
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("it-inventory")
 
-app = FastAPI(title="IT Inventory Management System", version="1.0.0")
+app = FastAPI(title="EDEMSA TIC INVENTARIO", version="1.0.0")
 
 api_router = APIRouter(prefix="/api")
 
 
 @api_router.get("/")
 async def root():
-    return {"service": "IT Inventory Management", "status": "ok"}
+    return {"service": "EDEMSA TIC INVENTARIO", "status": "ok"}
 
 
 @api_router.get("/health")
@@ -73,7 +73,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     errors = exc.errors()
     first = errors[0] if errors else {}
     field = ".".join(str(x) for x in first.get("loc", [])[-1:]) if first else ""
-    msg = first.get("msg") if first else "Invalid input."
+    msg = first.get("msg") if first else "Entrada inválida."
     friendly = f"{field}: {msg}" if field else msg
     return JSONResponse(status_code=422, content={"detail": friendly, "errors": errors})
 
@@ -83,11 +83,15 @@ async def _startup():
     try:
         await ensure_indexes()
         await seed_all()
-        logger.info("IT Inventory: indexes ensured and seed data verified.")
+        logger.info("EDEMSA TIC INVENTARIO: índices verificados y datos semilla validados.")
     except Exception as e:
-        logger.exception(f"Startup routine failed: {e}")
+        logger.exception(f"Falló la rutina de arranque: {e}")
 
 
 @app.on_event("shutdown")
 async def _shutdown():
     client.close()
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)

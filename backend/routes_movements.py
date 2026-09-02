@@ -14,9 +14,9 @@ router = APIRouter(prefix="/movements", tags=["movements"])
 async def _load_product(pid: str) -> dict:
     p = await db.products.find_one({"id": pid}, {"_id": 0})
     if not p:
-        raise HTTPException(404, detail="Product not found.")
+        raise HTTPException(404, detail="Producto no encontrado.")
     if not p.get("is_active", True):
-        raise HTTPException(400, detail="Product is inactive. Reactivate it before recording movements.")
+        raise HTTPException(400, detail="El producto está inactivo. Actívelo antes de registrar movimientos.")
     return p
 
 
@@ -77,7 +77,7 @@ async def list_movements(
 @router.post("/entry", response_model=MovementOut, status_code=201)
 async def register_entry(payload: EntryCreate, user: dict = Depends(require_perm("movement:write"))):
     if payload.qty <= 0:
-        raise HTTPException(400, detail="Quantity must be greater than zero.")
+        raise HTTPException(400, detail="La cantidad debe ser mayor que cero.")
     p = await _load_product(payload.product_id)
 
     updated = await db.products.find_one_and_update(
@@ -86,7 +86,7 @@ async def register_entry(payload: EntryCreate, user: dict = Depends(require_perm
         return_document=True,
     )
     if not updated:
-        raise HTTPException(500, detail="Failed to update stock.")
+        raise HTTPException(500, detail="No se pudo actualizar el stock.")
     previous_stock = updated["stock"] - payload.qty
 
     mv = {
@@ -118,10 +118,10 @@ async def register_entry(payload: EntryCreate, user: dict = Depends(require_perm
 @router.post("/exit", response_model=MovementOut, status_code=201)
 async def register_exit(payload: ExitCreate, user: dict = Depends(require_perm("movement:write"))):
     if payload.qty <= 0:
-        raise HTTPException(400, detail="Quantity must be greater than zero.")
+        raise HTTPException(400, detail="La cantidad debe ser mayor que cero.")
     p = await _load_product(payload.product_id)
 
-    # Atomic conditional decrement — the guard for no-oversell
+    # Decremento condicional atómico — barrera para evitar sobreventa
     updated = await db.products.find_one_and_update(
         {"id": payload.product_id, "stock": {"$gte": payload.qty}},
         {"$inc": {"stock": -payload.qty}, "$set": {"updated_at": now_iso()}},
@@ -130,7 +130,7 @@ async def register_exit(payload: ExitCreate, user: dict = Depends(require_perm("
     if not updated:
         current = await db.products.find_one({"id": payload.product_id}, {"_id": 0, "stock": 1})
         cur = current["stock"] if current else 0
-        raise HTTPException(400, detail=f"Insufficient stock. Available: {cur}, requested: {payload.qty}.")
+        raise HTTPException(400, detail=f"Stock insuficiente. Disponible: {cur}, solicitado: {payload.qty}.")
 
     previous_stock = updated["stock"] + payload.qty
     mv = {
@@ -164,7 +164,7 @@ async def register_adjustment(payload: AdjustmentCreate, user: dict = Depends(re
     previous_stock = int(p.get("stock", 0))
     diff = int(payload.new_stock) - previous_stock
     if diff == 0:
-        raise HTTPException(400, detail="Adjustment must change the stock quantity.")
+        raise HTTPException(400, detail="El ajuste debe modificar la cantidad en stock.")
 
     updated = await db.products.find_one_and_update(
         {"id": payload.product_id},

@@ -2,19 +2,19 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Package, Boxes, AlertTriangle, PackageX, ArrowUpRight,
-  ArrowDownRight, Activity, Building2, MapPin
+  ArrowDownRight, Activity, Building2
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { api } from "@/lib/api";
 import { TID } from "@/lib/testIds";
+import { formatNumber, tAlertKind } from "@/lib/format";
 
 const CHART_COLORS = ["hsl(186 78% 28%)", "hsl(205 78% 40%)", "hsl(160 55% 34%)", "hsl(35 85% 55%)", "hsl(0 72% 51%)", "hsl(268 45% 45%)", "hsl(190 60% 45%)", "hsl(215 50% 40%)"];
 
@@ -32,7 +32,7 @@ function KpiCard({ icon: Icon, label, value, tone = "default", trend, testId }) 
           <Icon size={18} />
         </div>
         <div className="min-w-0">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+          <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
           <div className="font-display text-2xl md:text-3xl font-semibold tabular-nums">{value}</div>
         </div>
         {trend && <div className="ml-auto text-xs text-muted-foreground">{trend}</div>}
@@ -75,34 +75,36 @@ export default function Dashboard() {
     return () => { cancelled = true; };
   }, []);
 
+  const fmt = (n) => (loading ? "—" : formatNumber(n ?? 0, { maximumFractionDigits: 0 }));
+
   return (
     <div>
       <PageHeader
-        title="Dashboard"
-        description="Live view of stock, movements and alerts."
-        breadcrumb={[{ label: "Home" }, { label: "Dashboard" }]}
+        title="Panel principal"
+        description="Vista en tiempo real de stock, movimientos y alertas."
+        breadcrumb={[{ label: "Inicio" }, { label: "Panel principal" }]}
       />
 
       <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
-        <KpiCard testId={TID.kpi("total-skus")} icon={Package} label="Total SKUs" value={loading ? "—" : stats?.total_skus ?? 0} />
-        <KpiCard testId={TID.kpi("total-units")} icon={Boxes} label="Units in stock" value={loading ? "—" : stats?.total_units ?? 0} />
-        <KpiCard testId={TID.kpi("low-stock")} icon={AlertTriangle} label="Low stock" value={loading ? "—" : stats?.low_stock ?? 0} tone="warn" />
-        <KpiCard testId={TID.kpi("out-of-stock")} icon={PackageX} label="Out of stock" value={loading ? "—" : stats?.out_of_stock ?? 0} tone="danger" />
+        <KpiCard testId={TID.kpi("total-skus")} icon={Package} label="SKUs totales" value={fmt(stats?.total_skus)} />
+        <KpiCard testId={TID.kpi("total-units")} icon={Boxes} label="Unidades en stock" value={fmt(stats?.total_units)} />
+        <KpiCard testId={TID.kpi("low-stock")} icon={AlertTriangle} label="Stock bajo" value={fmt(stats?.low_stock)} tone="warn" />
+        <KpiCard testId={TID.kpi("out-of-stock")} icon={PackageX} label="Agotados" value={fmt(stats?.out_of_stock)} tone="danger" />
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
-        <KpiCard testId={TID.kpi("entries-today")} icon={ArrowDownRight} label="Entries today" value={loading ? "—" : stats?.entries_today ?? 0} tone="good" />
-        <KpiCard testId={TID.kpi("exits-today")} icon={ArrowUpRight} label="Exits today" value={loading ? "—" : stats?.exits_today ?? 0} />
-        <KpiCard testId={TID.kpi("movements-today")} icon={Activity} label="Total moves today" value={loading ? "—" : stats?.movements_today ?? 0} />
-        <KpiCard testId={TID.kpi("categories")} icon={Building2} label="Categories" value={loading ? "—" : stats?.total_categories ?? 0} />
+        <KpiCard testId={TID.kpi("entries-today")} icon={ArrowDownRight} label="Entradas hoy" value={fmt(stats?.entries_today)} tone="good" />
+        <KpiCard testId={TID.kpi("exits-today")} icon={ArrowUpRight} label="Salidas hoy" value={fmt(stats?.exits_today)} />
+        <KpiCard testId={TID.kpi("movements-today")} icon={Activity} label="Movimientos hoy" value={fmt(stats?.movements_today)} />
+        <KpiCard testId={TID.kpi("categories")} icon={Building2} label="Categorías" value={fmt(stats?.total_categories)} />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="p-4 lg:col-span-2" data-testid={TID.chartMovements}>
           <div className="mb-2 flex items-center justify-between">
             <div>
-              <div className="font-display text-sm font-semibold">Movements last 14 days</div>
-              <div className="text-xs text-muted-foreground">Units entered vs exited per day</div>
+              <div className="font-display text-sm font-semibold">Movimientos últimos 14 días</div>
+              <div className="text-xs text-muted-foreground">Unidades ingresadas frente a salidas por día</div>
             </div>
           </div>
           <div className="h-[260px]">
@@ -123,8 +125,8 @@ export default function Dashboard() {
                   <XAxis dataKey="date" tickFormatter={(d) => d?.slice(5)} tick={{ fill: "hsl(215 16% 40%)", fontSize: 12 }} />
                   <YAxis tick={{ fill: "hsl(215 16% 40%)", fontSize: 12 }} />
                   <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid hsl(214 20% 90%)" }} />
-                  <Area type="monotone" name="Entries" dataKey="entries" stroke="hsl(186 78% 28%)" fill="url(#gEntries)" strokeWidth={2} />
-                  <Area type="monotone" name="Exits" dataKey="exits" stroke="hsl(35 85% 55%)" fill="url(#gExits)" strokeWidth={2} />
+                  <Area type="monotone" name="Entradas" dataKey="entries" stroke="hsl(186 78% 28%)" fill="url(#gEntries)" strokeWidth={2} />
+                  <Area type="monotone" name="Salidas" dataKey="exits" stroke="hsl(35 85% 55%)" fill="url(#gExits)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -133,8 +135,8 @@ export default function Dashboard() {
 
         <Card className="p-4" data-testid={TID.chartCategory}>
           <div className="mb-2">
-            <div className="font-display text-sm font-semibold">Products by category</div>
-            <div className="text-xs text-muted-foreground">Distribution across categories</div>
+            <div className="font-display text-sm font-semibold">Productos por categoría</div>
+            <div className="text-xs text-muted-foreground">Distribución del catálogo</div>
           </div>
           <div className="h-[260px]">
             {loading ? <Skeleton className="h-full w-full" /> : (
@@ -156,19 +158,19 @@ export default function Dashboard() {
         <Card className="p-4 lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
             <div>
-              <div className="font-display text-sm font-semibold">Most-moved products (30 days)</div>
-              <div className="text-xs text-muted-foreground">Sorted by total units moved</div>
+              <div className="font-display text-sm font-semibold">Productos con más movimiento (30 días)</div>
+              <div className="text-xs text-muted-foreground">Ordenados por unidades movidas</div>
             </div>
-            <Link to="/movements" className="text-xs text-primary hover:underline">View all movements →</Link>
+            <Link to="/movements" className="text-xs text-primary hover:underline">Ver todos →</Link>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="py-2">Product</th>
+                  <th className="py-2">Producto</th>
                   <th className="py-2">SKU</th>
-                  <th className="py-2 text-right">Total moved</th>
-                  <th className="py-2 text-right">Movements</th>
+                  <th className="py-2 text-right">Total movido</th>
+                  <th className="py-2 text-right">Movimientos</th>
                 </tr>
               </thead>
               <tbody>
@@ -180,12 +182,12 @@ export default function Dashboard() {
                       <Link to={`/products/${p.product_id}`} className="hover:underline">{p.name}</Link>
                     </td>
                     <td className="py-2 font-mono text-xs text-muted-foreground">{p.sku}</td>
-                    <td className="py-2 text-right tabular-nums">{p.total_moved}</td>
-                    <td className="py-2 text-right tabular-nums text-muted-foreground">{p.movement_count}</td>
+                    <td className="py-2 text-right tabular-nums">{formatNumber(p.total_moved, { maximumFractionDigits: 0 })}</td>
+                    <td className="py-2 text-right tabular-nums text-muted-foreground">{formatNumber(p.movement_count, { maximumFractionDigits: 0 })}</td>
                   </tr>
                 ))}
                 {!loading && topMoved.length === 0 && (
-                  <tr><td colSpan={4} className="py-4 text-center text-sm text-muted-foreground">No movements in the last 30 days.</td></tr>
+                  <tr><td colSpan={4} className="py-4 text-center text-sm text-muted-foreground">Sin movimientos en los últimos 30 días.</td></tr>
                 )}
               </tbody>
             </table>
@@ -195,16 +197,16 @@ export default function Dashboard() {
         <Card className="p-4" data-testid={TID.alertsPanel}>
           <div className="mb-3 flex items-center justify-between">
             <div>
-              <div className="font-display text-sm font-semibold">Alerts</div>
-              <div className="text-xs text-muted-foreground">Requires attention</div>
+              <div className="font-display text-sm font-semibold">Alertas</div>
+              <div className="text-xs text-muted-foreground">Requieren atención</div>
             </div>
-            <Link to="/alerts" className="text-xs text-primary hover:underline">All alerts →</Link>
+            <Link to="/alerts" className="text-xs text-primary hover:underline">Ver todas →</Link>
           </div>
           <div className="grid gap-2">
             {loading && Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
             {!loading && alerts.slice(0, 6).map((a) => (
               <Link key={a.id} to={a.product_id ? `/products/${a.product_id}` : "/alerts"} className="flex items-center gap-3 rounded-lg border border-border p-2.5 hover:bg-muted/50">
-                <StatusBadge status={a.severity === "error" ? "out" : a.severity === "warn" ? "low" : "info"} label={a.kind.replace(/_/g, " ")} />
+                <StatusBadge status={a.severity === "error" ? "out" : a.severity === "warn" ? "low" : "info"} label={tAlertKind(a.kind)} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm">{a.message}</div>
                   <div className="truncate text-[11px] font-mono text-muted-foreground">{a.product_sku}</div>
@@ -212,7 +214,7 @@ export default function Dashboard() {
               </Link>
             ))}
             {!loading && alerts.length === 0 && (
-              <div className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">All good — no alerts.</div>
+              <div className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">Todo en orden — sin alertas.</div>
             )}
           </div>
         </Card>

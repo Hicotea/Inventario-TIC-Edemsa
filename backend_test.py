@@ -5,7 +5,7 @@ Tests all endpoints, RBAC, atomic stock operations, concurrent oversell protecti
 and all CRUD operations for products, movements, master data, users, etc.
 """
 import asyncio
-import requests
+import requests  # pyright: ignore[reportMissingModuleSource]
 import sys
 import time
 from datetime import datetime
@@ -13,7 +13,7 @@ from typing import Optional, Dict, List, Tuple
 from concurrent.futures import ThreadPoolExecutor
 
 # Base URL from frontend/.env
-BASE_URL = "https://stocktrack-hub.preview.emergentagent.com/api"
+BASE_URL = "REACT_APP_API_URL=http://localhost:8000/api"
 
 # Test credentials (seeded)
 ADMIN_EMAIL = "admin@company.com"

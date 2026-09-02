@@ -23,7 +23,7 @@ async def list_products(
     location_id: Optional[str] = None,
     supplier_id: Optional[str] = None,
     status: Optional[str] = None,
-    is_active: Optional[bool] = None,
+    is_active: Optional[bool] = Query(True),  # <-- Filtrar por defecto los productos activos
     limit: int = Query(200, le=1000),
     skip: int = 0,
 ):
@@ -60,9 +60,9 @@ async def list_products(
 @router.post("", response_model=ProductOut, status_code=201)
 async def create_product(payload: ProductCreate, user: dict = Depends(require_perm("product:write"))):
     if await db.products.find_one({"sku": payload.sku}):
-        raise HTTPException(400, detail="A product with this SKU already exists.")
+        raise HTTPException(400, detail="Ya existe un producto con este SKU.")
     if payload.barcode and await db.products.find_one({"barcode": payload.barcode}):
-        raise HTTPException(400, detail="A product with this barcode already exists.")
+        raise HTTPException(400, detail="Ya existe un producto con este código de barras.")
 
     doc = payload.model_dump()
     doc["id"] = uid()
@@ -101,7 +101,7 @@ async def create_product(payload: ProductCreate, user: dict = Depends(require_pe
 async def get_product(product_id: str, user: dict = Depends(require_perm("product:read"))):
     doc = await db.products.find_one({"id": product_id}, {"_id": 0})
     if not doc:
-        raise HTTPException(404, detail="Product not found.")
+        raise HTTPException(404, detail="Producto no encontrado.")
     return await denormalize_product(doc)
 
 
@@ -109,11 +109,11 @@ async def get_product(product_id: str, user: dict = Depends(require_perm("produc
 async def update_product(product_id: str, payload: ProductUpdate, user: dict = Depends(require_perm("product:write"))):
     updates = {k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None}
     if not updates:
-        raise HTTPException(400, detail="No fields to update.")
+        raise HTTPException(400, detail="No hay campos para actualizar.")
     updates["updated_at"] = now_iso()
     result = await db.products.find_one_and_update({"id": product_id}, {"$set": updates}, return_document=True)
     if not result:
-        raise HTTPException(404, detail="Product not found.")
+        raise HTTPException(404, detail="Producto no encontrado.")
     await write_audit(user, "product.update", "product", product_id, updates)
     return await denormalize_product(sanitize(result))
 
@@ -127,12 +127,12 @@ async def delete_product(product_id: str, user: dict = Depends(require_perm("pro
             {"id": product_id}, {"$set": {"is_active": False, "updated_at": now_iso()}}
         )
         if not result:
-            raise HTTPException(404, detail="Product not found.")
+            raise HTTPException(404, detail="Producto no encontrado.")
         await write_audit(user, "product.deactivate", "product", product_id)
     else:
         r = await db.products.delete_one({"id": product_id})
         if r.deleted_count == 0:
-            raise HTTPException(404, detail="Product not found.")
+            raise HTTPException(404, detail="Producto no encontrado.")
         await write_audit(user, "product.delete", "product", product_id)
     return
 
@@ -141,7 +141,7 @@ async def delete_product(product_id: str, user: dict = Depends(require_perm("pro
 async def product_codes(product_id: str, user: dict = Depends(require_perm("product:read"))):
     p = await db.products.find_one({"id": product_id}, {"_id": 0})
     if not p:
-        raise HTTPException(404, detail="Product not found.")
+        raise HTTPException(404, detail="Producto no encontrado.")
     qr_payload = p.get("qr_code") or f"QR-{product_id}"
     bc_payload = p.get("barcode") or p.get("sku")
     return {
@@ -170,5 +170,5 @@ async def scan_lookup(code: str, user: dict = Depends(require_perm("product:read
     q = {"$or": [{"qr_code": code}, {"barcode": code}, {"sku": code}]}
     doc = await db.products.find_one(q, {"_id": 0})
     if not doc:
-        raise HTTPException(404, detail="No product matches this code.")
+        raise HTTPException(404, detail="Ningún producto coincide con este código.")
     return await denormalize_product(doc)

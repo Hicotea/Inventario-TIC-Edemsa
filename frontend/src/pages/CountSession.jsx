@@ -14,6 +14,7 @@ import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { api, showError, showSuccess } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { formatNumber, formatTime } from "@/lib/format";
 
 export default function CountSession() {
   const { id } = useParams();
@@ -35,6 +36,7 @@ export default function CountSession() {
     try { const { data } = await api.get(`/counts/${id}`); setSession(data); }
     catch (e) { showError(e); }
   };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); api.get("/products", { params: { limit: 500 } }).then(r => setProducts(r.data)); }, [id]);
 
   const items = session?.items || [];
@@ -56,7 +58,7 @@ export default function CountSession() {
       const { data } = await api.post(`/counts/${id}/items`, { product_id: product.id, counted_qty: Number(counted) });
       setSession(data);
       setProduct(null); setCounted("");
-      showSuccess("Item recorded.");
+      showSuccess("Ítem registrado.");
     } catch (e) { showError(e); } finally { setSaving(false); }
   };
 
@@ -65,7 +67,7 @@ export default function CountSession() {
     try {
       const { data } = await api.post(`/counts/${id}/close`, null, { params: { apply_adjustments: applyAdjustments } });
       setSession(data);
-      showSuccess(applyAdjustments ? "Session closed and adjustments applied." : "Session closed.");
+      showSuccess(applyAdjustments ? "Sesión cerrada y ajustes aplicados." : "Sesión cerrada.");
       setConfirmClose(false);
     } catch (e) { showError(e); } finally { setClosing(false); }
   };
@@ -73,42 +75,42 @@ export default function CountSession() {
   return (
     <div>
       <PageHeader
-        title={session?.name || "Counting session"}
-        description={session?.location_name || "All locations"}
-        breadcrumb={[{ label: "Physical counts", to: "/counts" }, { label: session?.name || "…" }]}
+        title={session?.name || "Sesión de conteo"}
+        description={session?.location_name || "Todas las ubicaciones"}
+        breadcrumb={[{ label: "Inventario físico", to: "/counts" }, { label: session?.name || "…" }]}
         actions={
           <>
-            <Button variant="outline" onClick={() => nav("/counts")}><ArrowLeft size={16} className="mr-2" />Back</Button>
-            {session?.status === "open" && canWrite && <Button onClick={() => setConfirmClose(true)}><CheckCircle2 size={16} className="mr-2" />Close &amp; adjust</Button>}
+            <Button variant="outline" onClick={() => nav("/counts")}><ArrowLeft size={16} className="mr-2" />Volver</Button>
+            {session?.status === "open" && canWrite && <Button onClick={() => setConfirmClose(true)}><CheckCircle2 size={16} className="mr-2" />Cerrar y ajustar</Button>}
           </>
         }
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="p-4 lg:col-span-1">
-          <div className="font-display text-sm font-semibold">Record an item</div>
+          <div className="font-display text-sm font-semibold">Registrar ítem</div>
           {session?.status !== "open" ? (
-            <div className="mt-3 rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">This session is closed.</div>
+            <div className="mt-3 rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">Esta sesión está cerrada.</div>
           ) : (
             <div className="mt-3 grid gap-3">
               <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="h-11 justify-between">
-                    {product ? <span className="flex items-center gap-2"><span>{product.name}</span><span className="font-mono text-xs text-muted-foreground">{product.sku}</span></span> : <span className="text-muted-foreground">Select a product…</span>}
+                    {product ? <span className="flex items-center gap-2"><span>{product.name}</span><span className="font-mono text-xs text-muted-foreground">{product.sku}</span></span> : <span className="text-muted-foreground">Seleccionar un producto…</span>}
                     <Search size={14} />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent align="start" className="p-0 w-[min(96vw,420px)]">
                   <Command>
-                    <CommandInput placeholder="Search products…" value={productQuery} onValueChange={setProductQuery} />
+                    <CommandInput placeholder="Buscar productos…" value={productQuery} onValueChange={setProductQuery} />
                     <CommandList className="max-h-[300px]">
-                      <CommandEmpty>No products.</CommandEmpty>
+                      <CommandEmpty>Sin resultados.</CommandEmpty>
                       <CommandGroup>
                         {filteredProducts.map(p => (
                           <CommandItem key={p.id} value={`${p.name} ${p.sku}`} onSelect={() => { scanOrPick(p.id); setPickerOpen(false); }}>
                             <div className="flex items-center justify-between gap-3 w-full">
                               <div className="min-w-0"><div className="truncate">{p.name}</div><div className="font-mono text-[11px] text-muted-foreground">{p.sku}</div></div>
-                              <div className="flex items-center gap-2"><StatusBadge status={p.status} /><span className="tabular-nums text-sm">{p.stock}</span></div>
+                              <div className="flex items-center gap-2"><StatusBadge status={p.status} /><span className="tabular-nums text-sm">{formatNumber(p.stock, { maximumFractionDigits: 0 })}</span></div>
                             </div>
                           </CommandItem>
                         ))}
@@ -119,39 +121,39 @@ export default function CountSession() {
               </Popover>
               {product && (
                 <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
-                  System stock: <span className="font-semibold tabular-nums">{product.stock}</span>
+                  Stock del sistema: <span className="font-semibold tabular-nums">{formatNumber(product.stock, { maximumFractionDigits: 0 })}</span>
                 </div>
               )}
               <div className="grid gap-1.5">
-                <Label>Physical count</Label>
+                <Label>Conteo físico</Label>
                 <Input type="number" min="0" value={counted} onChange={e => setCounted(e.target.value)} />
               </div>
               <Button onClick={record} disabled={!product || counted === "" || saving}>
-                {saving ? <><Loader2 className="mr-2 animate-spin" size={16}/>Recording…</> : "Record item"}
+                {saving ? <><Loader2 className="mr-2 animate-spin" size={16}/>Registrando…</> : "Registrar ítem"}
               </Button>
             </div>
           )}
         </Card>
 
         <Card className="p-4 lg:col-span-2">
-          <div className="font-display text-sm font-semibold">Counted items ({items.length})</div>
+          <div className="font-display text-sm font-semibold">Ítems contados ({items.length})</div>
           <div className="mt-3 overflow-x-auto">
             <Table>
               <TableHeader><TableRow className="bg-muted/40">
-                <TableHead>Product</TableHead><TableHead className="text-right">System</TableHead><TableHead className="text-right">Counted</TableHead><TableHead className="text-right">Diff</TableHead><TableHead>When</TableHead>
+                <TableHead>Producto</TableHead><TableHead className="text-right">Sistema</TableHead><TableHead className="text-right">Contado</TableHead><TableHead className="text-right">Diferencia</TableHead><TableHead>Hora</TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {items.length === 0 ? (
-                  <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">No items counted yet.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">Aún no se ha registrado ningún ítem.</TableCell></TableRow>
                 ) : items.slice().reverse().map((it, i) => (
                   <TableRow key={i}>
                     <TableCell><div className="font-medium">{it.product_name}</div><div className="font-mono text-[11px] text-muted-foreground">{it.product_sku}</div></TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">{it.system_qty}</TableCell>
-                    <TableCell className="text-right tabular-nums font-medium">{it.counted_qty}</TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">{formatNumber(it.system_qty, { maximumFractionDigits: 0 })}</TableCell>
+                    <TableCell className="text-right tabular-nums font-medium">{formatNumber(it.counted_qty, { maximumFractionDigits: 0 })}</TableCell>
                     <TableCell className="text-right tabular-nums">
-                      <Badge className={it.diff === 0 ? "bg-emerald-50 text-emerald-800 border-emerald-200" : it.diff > 0 ? "bg-cyan-50 text-cyan-800 border-cyan-200" : "bg-rose-50 text-rose-800 border-rose-200"}>{it.diff > 0 ? `+${it.diff}` : it.diff}</Badge>
+                      <Badge className={it.diff === 0 ? "bg-emerald-50 text-emerald-800 border-emerald-200" : it.diff > 0 ? "bg-cyan-50 text-cyan-800 border-cyan-200" : "bg-rose-50 text-rose-800 border-rose-200"}>{formatNumber(it.diff, { maximumFractionDigits: 0, signDisplay: "exceptZero" })}</Badge>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{new Date(it.counted_at).toLocaleTimeString()}</TableCell>
+                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{formatTime(it.counted_at)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -163,16 +165,16 @@ export default function CountSession() {
       <AlertDialog open={confirmClose} onOpenChange={setConfirmClose}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Close session and apply adjustments?</AlertDialogTitle>
+            <AlertDialogTitle>¿Cerrar la sesión y aplicar ajustes?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will lock the session and generate adjustment movements for every discrepancy so stock matches physical counts.
+              Se bloqueará la sesión y se generarán movimientos de ajuste por cada discrepancia para que el stock coincida con el conteo físico.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={closing}>Cancel</AlertDialogCancel>
-            <Button variant="outline" onClick={() => closeSession(false)} disabled={closing}>Close without adjusting</Button>
+            <AlertDialogCancel disabled={closing}>Cancelar</AlertDialogCancel>
+            <Button variant="outline" onClick={() => closeSession(false)} disabled={closing}>Cerrar sin ajustar</Button>
             <AlertDialogAction onClick={() => closeSession(true)} disabled={closing} className="bg-primary">
-              {closing ? <><Loader2 className="mr-2 animate-spin" size={16}/>Working…</> : "Close &amp; adjust"}
+              {closing ? <><Loader2 className="mr-2 animate-spin" size={16}/>Procesando…</> : "Cerrar y ajustar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

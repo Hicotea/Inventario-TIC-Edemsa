@@ -1,8 +1,8 @@
 import axios from "axios";
 import { toast } from "sonner";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "";
-export const API = `${BACKEND_URL}/api`;
+const BACKEND_URL = "http://localhost:8000";
+export const API = "http://localhost:8000/api";
 
 export const api = axios.create({
   baseURL: API,
@@ -41,19 +41,21 @@ api.interceptors.response.use(
     const status = err?.response?.status;
     const detail = err?.response?.data?.detail;
     if (status === 401) {
-      // Session expired
+      // Sesión expirada
       setAuthToken(null);
       if (!window.location.pathname.startsWith("/login")) {
         window.location.replace("/login");
       }
     }
-    // Provide a friendlier default message
-    err.friendlyMessage = typeof detail === "string" ? detail : (detail?.msg || err.message || "Something went wrong.");
+    // Mensaje amigable por defecto
+    err.friendlyMessage = typeof detail === "string"
+      ? detail
+      : (detail?.msg || err.message || "Ocurrió un problema inesperado.");
     return Promise.reject(err);
   }
 );
 
-export function showError(err, fallback = "Something went wrong.") {
+export function showError(err, fallback = "Ocurrió un problema inesperado.") {
   const msg = err?.friendlyMessage || err?.response?.data?.detail || err?.message || fallback;
   toast.error(typeof msg === "string" ? msg : fallback);
 }

@@ -43,24 +43,24 @@ export default function Login() {
               <Package size={18} />
             </div>
             <div>
-              <div className="font-display text-lg font-semibold leading-none">Stockroom OS</div>
-              <div className="text-xs text-muted-foreground leading-tight">Enterprise IT Inventory</div>
+              <div className="font-display text-lg font-semibold leading-none">EDEMSA TIC INVENTARIO</div>
+              <div className="text-xs text-muted-foreground leading-tight">Sistema de gestión de inventario TIC</div>
             </div>
           </div>
           <div className="relative max-w-md">
             <h1 className="font-display text-3xl xl:text-4xl font-semibold leading-tight">
-              Trace every part. From receiving to the last cable.
+              Trazabilidad completa. Desde la recepción hasta el último cable.
             </h1>
             <p className="mt-3 text-sm text-muted-foreground">
-              Real-time stock levels, atomic movements, QR/barcode scanning, and a full audit trail — built for busy IT teams.
+              Niveles de stock en tiempo real, movimientos atómicos, lectura de QR/códigos de barras y bitácora de auditoría — diseñado para equipos de TIC.
             </p>
             <div className="mt-6 grid gap-2 text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground"><ShieldCheck size={16} className="text-primary" /> Role-based access control</div>
-              <div className="flex items-center gap-2 text-muted-foreground"><ShieldCheck size={16} className="text-primary" /> No-oversell atomic exits</div>
-              <div className="flex items-center gap-2 text-muted-foreground"><ShieldCheck size={16} className="text-primary" /> Immutable audit log</div>
+              <div className="flex items-center gap-2 text-muted-foreground"><ShieldCheck size={16} className="text-primary" /> Control de acceso por rol</div>
+              <div className="flex items-center gap-2 text-muted-foreground"><ShieldCheck size={16} className="text-primary" /> Salidas atómicas sin sobreventa</div>
+              <div className="flex items-center gap-2 text-muted-foreground"><ShieldCheck size={16} className="text-primary" /> Bitácora de auditoría inmutable</div>
             </div>
           </div>
-          <div className="relative text-[11px] text-muted-foreground">© {new Date().getFullYear()} Stockroom OS — for internal IT use.</div>
+          <div className="relative text-[11px] text-muted-foreground">© {new Date().getFullYear()} EDEMSA TIC INVENTARIO — uso interno.</div>
         </div>
 
         {/* Form panel */}
@@ -68,13 +68,13 @@ export default function Login() {
           <Card className="w-full max-w-md p-6 md:p-8 shadow-sm border-border">
             <div className="flex items-center gap-2 lg:hidden mb-4">
               <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground"><Package size={16} /></div>
-              <div className="font-display font-semibold">Stockroom OS</div>
+              <div className="font-display font-semibold">EDEMSA TIC INVENTARIO</div>
             </div>
-            <h2 className="font-display text-2xl font-semibold">Sign in</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Access your inventory workspace.</p>
+            <h2 className="font-display text-2xl font-semibold">Iniciar sesión</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Ingrese a su espacio de trabajo de inventario.</p>
             <form onSubmit={onSubmit} className="mt-6 grid gap-4">
               <div className="grid gap-1.5">
-                <Label htmlFor="email">Work email</Label>
+                <Label htmlFor="email">Correo corporativo</Label>
                 <Input
                   id="email"
                   type="email"
@@ -84,11 +84,11 @@ export default function Login() {
                   data-testid={TID.loginEmail}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
+                  placeholder="usuario@edemsa.com"
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Contraseña</Label>
                 <Input
                   id="password"
                   type="password"
@@ -101,11 +101,11 @@ export default function Login() {
                 />
               </div>
               <Button type="submit" disabled={loading} data-testid={TID.loginSubmit} className="h-10">
-                {loading ? <><Loader2 className="mr-2 animate-spin" size={16}/> Signing in…</> : "Sign in"}
+                {loading ? <><Loader2 className="mr-2 animate-spin" size={16}/> Ingresando…</> : "Ingresar"}
               </Button>
             </form>
             <div className="mt-6 rounded-lg border border-dashed border-border p-3 text-xs">
-              <div className="font-medium text-foreground">Demo accounts</div>
+              <div className="font-medium text-foreground">Cuentas de demostración</div>
               <div className="mt-1 grid gap-1 text-muted-foreground">
                 <button type="button" onClick={() => fillDemo("admin")} className="text-left hover:text-foreground">
                   <span className="font-mono">admin@company.com</span> · Admin123!

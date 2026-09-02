@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, Edit3, Printer, ArrowDownRight, ArrowUpRight, SlidersHorizontal, ExternalLink, Loader2,
+  ArrowLeft, Edit3, Printer, ArrowDownRight, ArrowUpRight, SlidersHorizontal, ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { api, showError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { formatDateTime, formatNumber, formatCurrency, tMovementType, tReason } from "@/lib/format";
 
 function PrintableLabel({ product, codes }) {
   return (
@@ -24,8 +25,8 @@ function PrintableLabel({ product, codes }) {
           <div className="font-display text-base font-semibold">{product.name}</div>
         </div>
         <div className="mt-3 flex justify-center gap-3">
-          {codes?.qr_png && <img src={codes.qr_png} alt="QR" style={{ width: 110, height: 110 }} />}
-          {codes?.barcode_png && <img src={codes.barcode_png} alt="Barcode" style={{ height: 110 }} />}
+          {codes?.qr_png && <img src={codes.qr_png} alt="Código QR" style={{ width: 110, height: 110 }} />}
+          {codes?.barcode_png && <img src={codes.barcode_png} alt="Código de barras" style={{ height: 110 }} />}
         </div>
         <div className="mt-2 text-center text-xs text-black">{product.location_name || "—"}</div>
       </div>
@@ -73,7 +74,7 @@ export default function ProductDetail() {
   if (loading) {
     return (
       <div>
-        <PageHeader title="…" breadcrumb={[{ label: "Products", to: "/products" }, { label: "…" }]} />
+        <PageHeader title="Cargando…" breadcrumb={[{ label: "Productos", to: "/products" }, { label: "Cargando…" }]} />
         <Skeleton className="h-64 w-full" />
       </div>
     );
@@ -85,14 +86,14 @@ export default function ProductDetail() {
       <PageHeader
         title={product.name}
         description={<span className="font-mono text-xs">{product.sku}</span>}
-        breadcrumb={[{ label: "Products", to: "/products" }, { label: product.name }]}
+        breadcrumb={[{ label: "Productos", to: "/products" }, { label: product.name }]}
         actions={
           <>
-            <Button variant="outline" onClick={() => navigate(-1)}><ArrowLeft size={16} className="mr-2" />Back</Button>
-            <Button variant="outline" onClick={() => window.print()} className="no-print"><Printer size={16} className="mr-2" />Print label</Button>
+            <Button variant="outline" onClick={() => navigate(-1)}><ArrowLeft size={16} className="mr-2" />Volver</Button>
+            <Button variant="outline" onClick={() => window.print()} className="no-print"><Printer size={16} className="mr-2" />Imprimir etiqueta</Button>
             {canEdit && (
               <Button variant="outline" onClick={() => navigate(`/products/${id}/edit`)} className="no-print">
-                <Edit3 size={16} className="mr-2" />Edit
+                <Edit3 size={16} className="mr-2" />Editar
               </Button>
             )}
           </>
@@ -100,27 +101,26 @@ export default function ProductDetail() {
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 no-print">
-        {/* Details */}
         <Card className="p-5 lg:col-span-2">
           <div className="flex items-start justify-between">
             <div>
-              <div className="font-display text-lg font-semibold">Details</div>
-              <div className="mt-1 text-xs text-muted-foreground">Product information</div>
+              <div className="font-display text-lg font-semibold">Detalles</div>
+              <div className="mt-1 text-xs text-muted-foreground">Información del producto</div>
             </div>
             <StatusBadge status={product.status} />
           </div>
           <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3">
-            <Field label="Category" value={product.category_name} />
-            <Field label="Brand" value={product.brand_name} />
-            <Field label="Location" value={product.location_name} />
-            <Field label="Supplier" value={product.supplier_name} />
-            <Field label="Model" value={product.model} />
-            <Field label="Part number" value={product.part_number} />
-            <Field label="Unit" value={product.unit} />
-            <Field label="Current stock" value={<span className="tabular-nums font-semibold">{product.stock}</span>} />
-            <Field label="Min / Max" value={<span className="tabular-nums">{product.min_stock} / {product.max_stock}</span>} />
-            <Field label="Unit cost" value={<span className="tabular-nums">$ {Number(product.unit_cost || 0).toFixed(2)}</span>} />
-            <Field label="Barcode" value={<span className="font-mono text-xs">{product.barcode || "—"}</span>} />
+            <Field label="Categoría" value={product.category_name} />
+            <Field label="Marca" value={product.brand_name} />
+            <Field label="Ubicación" value={product.location_name} />
+            <Field label="Proveedor" value={product.supplier_name} />
+            <Field label="Modelo" value={product.model} />
+            <Field label="Número de parte" value={product.part_number} />
+            <Field label="Unidad" value={product.unit} />
+            <Field label="Stock actual" value={<span className="tabular-nums font-semibold">{formatNumber(product.stock, { maximumFractionDigits: 0 })}</span>} />
+            <Field label="Mín. / Máx." value={<span className="tabular-nums">{formatNumber(product.min_stock, { maximumFractionDigits: 0 })} / {formatNumber(product.max_stock, { maximumFractionDigits: 0 })}</span>} />
+            <Field label="Costo unitario" value={<span className="tabular-nums">{formatCurrency(product.unit_cost || 0)}</span>} />
+            <Field label="Código de barras" value={<span className="font-mono text-xs">{product.barcode || "—"}</span>} />
             <Field label="QR" value={<span className="font-mono text-xs break-all">{product.qr_code || "—"}</span>} />
           </div>
           {product.description && (
@@ -128,19 +128,18 @@ export default function ProductDetail() {
           )}
         </Card>
 
-        {/* Codes */}
         <Card className="p-5">
-          <div className="font-display text-lg font-semibold">Identifiers</div>
+          <div className="font-display text-lg font-semibold">Identificadores</div>
           <div className="mt-4 grid gap-4">
             {codes?.qr_png && (
               <div className="rounded-lg border border-border p-3">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">QR</div>
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">Código QR</div>
                 <div className="mt-2 flex items-center gap-3">
-                  <img src={codes.qr_png} alt="QR" className="h-24 w-24" />
+                  <img src={codes.qr_png} alt="Código QR del producto" className="h-24 w-24" />
                   <div className="min-w-0">
                     <div className="font-mono text-xs break-all">{codes.qr_code}</div>
                     <a href={codes.qr_png} download={`${product.sku}-qr.png`} className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                      Download <ExternalLink size={12} />
+                      Descargar <ExternalLink size={12} />
                     </a>
                   </div>
                 </div>
@@ -148,13 +147,13 @@ export default function ProductDetail() {
             )}
             {codes?.barcode_png && (
               <div className="rounded-lg border border-border p-3">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">Barcode</div>
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">Código de barras</div>
                 <div className="mt-2 flex items-center gap-3">
-                  <img src={codes.barcode_png} alt="Barcode" className="h-14" />
+                  <img src={codes.barcode_png} alt="Código de barras del producto" className="h-14" />
                   <div className="min-w-0">
                     <div className="font-mono text-xs break-all">{codes.barcode}</div>
                     <a href={codes.barcode_png} download={`${product.sku}-barcode.png`} className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                      Download <ExternalLink size={12} />
+                      Descargar <ExternalLink size={12} />
                     </a>
                   </div>
                 </div>
@@ -165,14 +164,14 @@ export default function ProductDetail() {
           {canMove && (
             <div className="mt-4 grid gap-2">
               <Button onClick={() => navigate(`/movements/entry?product=${id}`)} className="w-full justify-start" variant="outline">
-                <ArrowDownRight size={16} className="mr-2" /> Register entry
+                <ArrowDownRight size={16} className="mr-2" /> Registrar entrada
               </Button>
               <Button onClick={() => navigate(`/movements/exit?product=${id}`)} className="w-full justify-start" variant="outline">
-                <ArrowUpRight size={16} className="mr-2" /> Register exit
+                <ArrowUpRight size={16} className="mr-2" /> Registrar salida
               </Button>
               {hasPerm("adjustment:write") && (
                 <Button onClick={() => navigate(`/movements/adjustment?product=${id}`)} className="w-full justify-start" variant="outline">
-                  <SlidersHorizontal size={16} className="mr-2" /> Adjust stock
+                  <SlidersHorizontal size={16} className="mr-2" /> Ajustar stock
                 </Button>
               )}
             </div>
@@ -182,41 +181,41 @@ export default function ProductDetail() {
 
       <Tabs defaultValue="history" className="mt-6 no-print">
         <TabsList>
-          <TabsTrigger value="history">Movement history</TabsTrigger>
+          <TabsTrigger value="history">Historial de movimientos</TabsTrigger>
         </TabsList>
         <TabsContent value="history" className="mt-3">
           {history.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No movements yet.</div>
+            <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Aún no hay movimientos registrados.</div>
           ) : (
             <Card className="overflow-hidden">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/40">
-                      <TableHead>When</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead className="text-right">Qty</TableHead>
-                      <TableHead className="text-right">Previous</TableHead>
-                      <TableHead className="text-right">Resulting</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead>Reason</TableHead>
+                      <TableHead>Fecha y hora</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead className="text-right">Cantidad</TableHead>
+                      <TableHead className="text-right">Anterior</TableHead>
+                      <TableHead className="text-right">Resultante</TableHead>
+                      <TableHead>Usuario</TableHead>
+                      <TableHead>Motivo</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {history.map((h) => (
                       <TableRow key={h.id}>
-                        <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString()}</TableCell>
+                        <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{formatDateTime(h.created_at)}</TableCell>
                         <TableCell>
                           <span className="inline-flex items-center gap-1.5 text-sm">
                             <MoveIcon type={h.type} className={h.type === "exit" ? "text-rose-600" : h.type === "entry" ? "text-emerald-600" : "text-amber-600"} size={14} />
-                            <span className="capitalize">{h.type}</span>
+                            <span>{tMovementType(h.type)}</span>
                           </span>
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">{h.qty}</TableCell>
-                        <TableCell className="text-right tabular-nums text-muted-foreground">{h.previous_stock}</TableCell>
-                        <TableCell className="text-right tabular-nums font-medium">{h.resulting_stock}</TableCell>
+                        <TableCell className="text-right tabular-nums">{formatNumber(h.qty, { maximumFractionDigits: 0 })}</TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">{formatNumber(h.previous_stock, { maximumFractionDigits: 0 })}</TableCell>
+                        <TableCell className="text-right tabular-nums font-medium">{formatNumber(h.resulting_stock, { maximumFractionDigits: 0 })}</TableCell>
                         <TableCell>{h.user_name || h.user_id}</TableCell>
-                        <TableCell className="max-w-[280px] truncate">{h.reason || "—"}</TableCell>
+                        <TableCell className="max-w-[280px] truncate">{tReason(h.reason) || "—"}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -227,7 +226,6 @@ export default function ProductDetail() {
         </TabsContent>
       </Tabs>
 
-      {/* Print-only label */}
       <PrintableLabel product={product} codes={codes} />
     </div>
   );

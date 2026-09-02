@@ -13,7 +13,7 @@ import EmptyState from "@/components/EmptyState";
 import { api, showError, showSuccess } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
-export default function MasterList({ collection, title, description, singular }) {
+export default function MasterList({ collection, title, description, singular, singularArticle = "un" }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openEdit, setOpenEdit] = useState(false);
@@ -41,10 +41,10 @@ export default function MasterList({ collection, title, description, singular })
     try {
       if (editing) {
         await api.patch(`/${collection}/${editing.id}`, { name, description: desc || null, is_active: true });
-        showSuccess(`${singular} updated.`);
+        showSuccess(`${singular} actualizad${singularArticle === "una" ? "a" : "o"}.`);
       } else {
         await api.post(`/${collection}`, { name, description: desc || null, is_active: true });
-        showSuccess(`${singular} created.`);
+        showSuccess(`${singular} cread${singularArticle === "una" ? "a" : "o"}.`);
       }
       setOpenEdit(false); load();
     } catch (e) { showError(e); }
@@ -53,31 +53,33 @@ export default function MasterList({ collection, title, description, singular })
 
   const doDelete = async () => {
     if (!toDelete) return;
-    try { await api.delete(`/${collection}/${toDelete.id}`); showSuccess(`${singular} deleted.`); load(); }
+    try { await api.delete(`/${collection}/${toDelete.id}`); showSuccess(`${singular} eliminad${singularArticle === "una" ? "a" : "o"}.`); load(); }
     catch (e) { showError(e); }
     finally { setToDelete(null); }
   };
+
+  const newLabel = `Nuev${singularArticle === "una" ? "a" : "o"} ${singular.toLowerCase()}`;
 
   return (
     <div>
       <PageHeader
         title={title}
         description={description}
-        breadcrumb={[{ label: "Master data" }, { label: title }]}
-        actions={canWrite && <Button onClick={openCreate}><Plus size={16} className="mr-2" />New {singular.toLowerCase()}</Button>}
+        breadcrumb={[{ label: "Datos maestros" }, { label: title }]}
+        actions={canWrite && <Button onClick={openCreate}><Plus size={16} className="mr-2" />{newLabel}</Button>}
       />
       {loading ? (
-        <Card className="p-4">Loading…</Card>
+        <Card className="p-4">Cargando…</Card>
       ) : items.length === 0 ? (
-        <EmptyState title={`No ${title.toLowerCase()} yet`} action={canWrite && <Button onClick={openCreate}><Plus size={16} className="mr-2" />New {singular.toLowerCase()}</Button>} />
+        <EmptyState title={`Aún no hay ${title.toLowerCase()}`} action={canWrite && <Button onClick={openCreate}><Plus size={16} className="mr-2" />{newLabel}</Button>} />
       ) : (
         <Card className="overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead>Name</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="w-[120px] text-right">Actions</TableHead>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Descripción</TableHead>
+                <TableHead className="w-[120px] text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -88,8 +90,8 @@ export default function MasterList({ collection, title, description, singular })
                   <TableCell className="text-right">
                     {canWrite && (
                       <div className="flex justify-end gap-1">
-                        <Button size="icon" variant="ghost" onClick={() => openUpdate(it)} aria-label="Edit"><Pencil size={14} /></Button>
-                        <Button size="icon" variant="ghost" onClick={() => setToDelete(it)} aria-label="Delete"><Trash2 size={14} className="text-rose-600" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => openUpdate(it)} aria-label="Editar"><Pencil size={14} /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => setToDelete(it)} aria-label="Eliminar"><Trash2 size={14} className="text-rose-600" /></Button>
                       </div>
                     )}
                   </TableCell>
@@ -102,20 +104,20 @@ export default function MasterList({ collection, title, description, singular })
 
       <Dialog open={openEdit} onOpenChange={setOpenEdit}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editing ? `Edit ${singular.toLowerCase()}` : `New ${singular.toLowerCase()}`}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? `Editar ${singular.toLowerCase()}` : newLabel}</DialogTitle></DialogHeader>
           <div className="grid gap-3">
             <div className="grid gap-1.5">
-              <Label>Name</Label>
-              <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Peripherals" autoFocus />
+              <Label>Nombre</Label>
+              <Input value={name} onChange={e => setName(e.target.value)} placeholder="p. ej. Periféricos" autoFocus />
             </div>
             <div className="grid gap-1.5">
-              <Label>Description</Label>
+              <Label>Descripción</Label>
               <Textarea rows={2} value={desc} onChange={e => setDesc(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenEdit(false)}>Cancel</Button>
-            <Button onClick={save} disabled={saving || !name.trim()}>{saving ? <><Loader2 className="mr-2 animate-spin" size={16}/>Saving…</> : "Save"}</Button>
+            <Button variant="outline" onClick={() => setOpenEdit(false)}>Cancelar</Button>
+            <Button onClick={save} disabled={saving || !name.trim()}>{saving ? <><Loader2 className="mr-2 animate-spin" size={16}/>Guardando…</> : "Guardar"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -123,14 +125,14 @@ export default function MasterList({ collection, title, description, singular })
       <AlertDialog open={!!toDelete} onOpenChange={(v) => !v && setToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {singular.toLowerCase()}?</AlertDialogTitle>
+            <AlertDialogTitle>¿Eliminar {singular.toLowerCase()}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete <span className="font-medium">{toDelete?.name}</span>. Cannot be undone.
+              Se eliminará permanentemente <span className="font-medium">{toDelete?.name}</span>. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={doDelete} className="bg-rose-600 text-white hover:bg-rose-700">Delete</AlertDialogAction>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={doDelete} className="bg-rose-600 text-white hover:bg-rose-700">Eliminar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

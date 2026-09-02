@@ -6,29 +6,30 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { TID } from "@/lib/testIds";
+import { tRole } from "@/lib/format";
 
 const PRIMARY = [
-  { to: "/dashboard", key: "dashboard", label: "Dashboard", icon: LayoutDashboard, perm: null },
-  { to: "/products", key: "products", label: "Products", icon: Package, perm: "product:read" },
-  { to: "/movements", key: "movements", label: "Movements", icon: ArrowRightLeft, perm: "movement:read" },
-  { to: "/scanner", key: "scanner", label: "Scanner", icon: ScanLine, perm: "product:read" },
-  { to: "/alerts", key: "alerts", label: "Alerts", icon: Bell, perm: "product:read" },
-  { to: "/counts", key: "counts", label: "Physical Counts", icon: ClipboardList, perm: "count:read" },
-  { to: "/reports", key: "reports", label: "Reports", icon: FileBarChart, perm: "report:read" },
-  { to: "/import", key: "import", label: "Import", icon: Upload, perm: "import:write" },
+  { to: "/dashboard", key: "dashboard", label: "Panel principal", icon: LayoutDashboard, perm: null },
+  { to: "/products", key: "products", label: "Productos", icon: Package, perm: "product:read" },
+  { to: "/movements", key: "movements", label: "Movimientos", icon: ArrowRightLeft, perm: "movement:read" },
+  { to: "/scanner", key: "scanner", label: "Escáner", icon: ScanLine, perm: "product:read" },
+  { to: "/alerts", key: "alerts", label: "Alertas", icon: Bell, perm: "product:read" },
+  { to: "/counts", key: "counts", label: "Inventario físico", icon: ClipboardList, perm: "count:read" },
+  { to: "/reports", key: "reports", label: "Reportes", icon: FileBarChart, perm: "report:read" },
+  { to: "/import", key: "import", label: "Importar", icon: Upload, perm: "import:write" },
 ];
 
 const MASTER = [
-  { to: "/categories", key: "categories", label: "Categories", icon: Tags, perm: "master:read" },
-  { to: "/brands", key: "brands", label: "Brands", icon: Boxes, perm: "master:read" },
-  { to: "/locations", key: "locations", label: "Locations", icon: MapPin, perm: "master:read" },
-  { to: "/suppliers", key: "suppliers", label: "Suppliers", icon: Building2, perm: "master:read" },
+  { to: "/categories", key: "categories", label: "Categorías", icon: Tags, perm: "master:read" },
+  { to: "/brands", key: "brands", label: "Marcas", icon: Boxes, perm: "master:read" },
+  { to: "/locations", key: "locations", label: "Ubicaciones", icon: MapPin, perm: "master:read" },
+  { to: "/suppliers", key: "suppliers", label: "Proveedores", icon: Building2, perm: "master:read" },
 ];
 
 const ADMIN = [
-  { to: "/users", key: "users", label: "Users", icon: Users, roleOnly: "admin" },
-  { to: "/audit", key: "audit", label: "Audit Log", icon: ShieldCheck, roleOnly: "admin" },
-  { to: "/settings", key: "settings", label: "Permissions", icon: Settings2, roleOnly: "admin" },
+  { to: "/users", key: "users", label: "Usuarios", icon: Users, roleOnly: "admin" },
+  { to: "/audit", key: "audit", label: "Auditoría", icon: ShieldCheck, roleOnly: "admin" },
+  { to: "/settings", key: "settings", label: "Permisos", icon: Settings2, roleOnly: "admin" },
 ];
 
 function Item({ to, label, icon: Icon, testId, onNavigate }) {
@@ -70,29 +71,31 @@ export default function Sidebar({ onNavigate }) {
 
   return (
     <div className="flex h-full w-full flex-col">
-      <div className="flex h-14 items-center gap-2 border-b border-border px-4">
-        <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">
-          <Package size={16} />
-        </div>
-        <div className="flex flex-col">
-          <span className="font-display text-sm font-semibold leading-none">Stockroom OS</span>
-          <span className="text-[11px] text-muted-foreground leading-tight">IT Inventory</span>
+      <div className="flex h-14 items-center gap-2.5 border-b border-border px-4">
+        <img 
+          src="/logo.png" 
+          alt="EDEMSA Logo" 
+          className="h-8 w-8 object-contain rounded-md"
+        />
+        <div className="flex flex-col min-w-0">
+          <span className="font-display text-sm font-semibold leading-none truncate">EDEMSA TIC</span>
+          <span className="text-[11px] text-muted-foreground leading-tight">Inventario</span>
         </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto scroll-thin pb-4">
-        <Group label="Overview">
+        <Group label="General">
           {PRIMARY.filter(canShow).map((i) => (
             <Item key={i.key} to={i.to} label={i.label} icon={i.icon} testId={TID.sidebarNav(i.key)} onNavigate={onNavigate} />
           ))}
         </Group>
-        <Group label="Master data">
+        <Group label="Datos maestros">
           {MASTER.filter(canShow).map((i) => (
             <Item key={i.key} to={i.to} label={i.label} icon={i.icon} testId={TID.sidebarNav(i.key)} onNavigate={onNavigate} />
           ))}
         </Group>
         {user?.role === "admin" && (
-          <Group label="Administration">
+          <Group label="Administración">
             {ADMIN.map((i) => (
               <Item key={i.key} to={i.to} label={i.label} icon={i.icon} testId={TID.sidebarNav(i.key)} onNavigate={onNavigate} />
             ))}
@@ -107,7 +110,7 @@ export default function Sidebar({ onNavigate }) {
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-medium">{user?.full_name || user?.email}</div>
-            <div className="truncate text-[11px] uppercase tracking-wide text-muted-foreground">{user?.role}</div>
+            <div className="truncate text-[11px] uppercase tracking-wide text-muted-foreground">{tRole(user?.role)}</div>
           </div>
         </div>
       </div>

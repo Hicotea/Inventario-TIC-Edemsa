@@ -33,7 +33,7 @@ function Boot() {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <div className="font-mono text-xs text-muted-foreground">Loading…</div>
+        <div className="font-mono text-xs text-muted-foreground">Cargando…</div>
       </div>
     );
   }
@@ -78,7 +78,8 @@ function Boot() {
 
 function App() {
   useEffect(() => {
-    document.title = "IT Inventory · Stockroom OS";
+    document.title = "EDEMSA TIC INVENTARIO";
+    document.documentElement.lang = "es-CO";
   }, []);
   return (
     <AuthProvider>

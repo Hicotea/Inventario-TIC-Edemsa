@@ -46,17 +46,17 @@ def decode_token(token: str) -> dict:
 
 async def get_current_user(token: Optional[str] = Depends(oauth2_scheme)) -> dict:
     if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No autenticado.")
     try:
         data = decode_token(token)
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired. Please sign in again.")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="La sesión expiró. Inicie sesión nuevamente.")
     except Exception:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials.")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas.")
 
     user = await db.users.find_one({"id": data["sub"]}, {"_id": 0, "password": 0})
     if not user or not user.get("is_active", True):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User inactive or not found.")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario inactivo o inexistente.")
     return user
 
 
@@ -106,7 +106,7 @@ def require_perm(*needed: str):
             if p not in perms:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"You do not have permission to perform this action ({p}).",
+                    detail=f"No tiene permisos para realizar esta acción ({p}).",
                 )
         return user
 
@@ -116,7 +116,7 @@ def require_perm(*needed: str):
 def require_role(*roles: str):
     async def _dep(user: dict = Depends(get_current_user)):
         if user["role"] not in roles:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required.")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Se requieren permisos de administrador.")
         return user
 
     return _dep
