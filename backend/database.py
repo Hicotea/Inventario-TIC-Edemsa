@@ -1,5 +1,6 @@
 """MongoDB client and index management."""
 import os
+import certifi
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 from pathlib import Path
@@ -10,7 +11,8 @@ load_dotenv(ROOT_DIR / ".env")
 MONGO_URL = os.environ["MONGO_URL"]
 DB_NAME = os.environ.get("DB_NAME", "it_inventory")
 
-client = AsyncIOMotorClient(MONGO_URL)
+# Se añade tlsCAFile=certifi.where() para resolver la validación SSL en Render
+client = AsyncIOMotorClient(MONGO_URL, tlsCAFile=certifi.where())
 db = client[DB_NAME]
 
 

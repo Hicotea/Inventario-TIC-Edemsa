@@ -21,3 +21,4 @@ openpyxl
 reportlab
 qrcode
 python-barcode
+certifi
