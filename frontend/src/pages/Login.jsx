@@ -104,20 +104,6 @@ export default function Login() {
                 {loading ? <><Loader2 className="mr-2 animate-spin" size={16}/> Ingresando…</> : "Ingresar"}
               </Button>
             </form>
-            <div className="mt-6 rounded-lg border border-dashed border-border p-3 text-xs">
-              <div className="font-medium text-foreground">Cuentas de demostración</div>
-              <div className="mt-1 grid gap-1 text-muted-foreground">
-                <button type="button" onClick={() => fillDemo("admin")} className="text-left hover:text-foreground">
-                  <span className="font-mono">admin@company.com</span> · Admin123!
-                </button>
-                <button type="button" onClick={() => fillDemo("manager")} className="text-left hover:text-foreground">
-                  <span className="font-mono">manager@company.com</span> · Manager123!
-                </button>
-                <button type="button" onClick={() => fillDemo("viewer")} className="text-left hover:text-foreground">
-                  <span className="font-mono">viewer@company.com</span> · Viewer123!
-                </button>
-              </div>
-            </div>
           </Card>
         </div>
       </div>
