@@ -6,7 +6,7 @@ export const API = process.env.REACT_APP_API_URL || `${BACKEND_URL}/api`;
 
 export const api = axios.create({
   baseURL: API,
-  timeout: 30000,
+  timeout: 60000,
 });
 
 let _token = null;
