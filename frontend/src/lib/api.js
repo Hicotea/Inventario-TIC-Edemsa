@@ -1,8 +1,8 @@
 import axios from "axios";
 import { toast } from "sonner";
 
-const BACKEND_URL = "http://localhost:8000";
-export const API = "http://localhost:8000/api";
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://inventario-tic-edemsa.onrender.com";
+export const API = process.env.REACT_APP_API_URL || `${BACKEND_URL}/api`;
 
 export const api = axios.create({
   baseURL: API,
