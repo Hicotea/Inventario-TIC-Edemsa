@@ -1,21 +1,20 @@
 """MongoDB client and index management."""
 import os
-from motor.motor_asyncio import AsyncIOMotorClient
-from dotenv import load_dotenv
 from pathlib import Path
 import certifi
+from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 
-# Pasar el certificado CA explícito
-client = AsyncIOMotorClient(MONGO_URL, tlsCAFile=certifi.where())
-db = client.it_inventory
+# Cargar variables de entorno locales
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
+# Obtener variables de entorno
 MONGO_URL = os.environ["MONGO_URL"]
 DB_NAME = os.environ.get("DB_NAME", "it_inventory")
 
-client = AsyncIOMotorClient(MONGO_URL)
+# Crear cliente MongoDB con certificado CA explícito de certifi
+client = AsyncIOMotorClient(MONGO_URL, tlsCAFile=certifi.where())
 db = client[DB_NAME]
 
 
