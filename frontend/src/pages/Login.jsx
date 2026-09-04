@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, Loader2, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,12 +23,6 @@ export default function Login() {
     if (res.ok) navigate("/dashboard", { replace: true });
   };
 
-  const fillDemo = (role) => {
-    if (role === "admin") { setEmail("admin@company.com"); setPassword("Admin123!"); }
-    if (role === "manager") { setEmail("manager@company.com"); setPassword("Manager123!"); }
-    if (role === "viewer") { setEmail("viewer@company.com"); setPassword("Viewer123!"); }
-  };
-
   return (
     <div className="min-h-screen w-full bg-background text-foreground">
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
@@ -38,10 +32,12 @@ export default function Login() {
             aria-hidden
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(1200px_circle_at_-10%_-10%,hsl(186_55%_92%)_0%,transparent_55%)]"
           />
-          <div className="relative flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground">
-              <Package size={18} />
-            </div>
+          <div className="relative flex items-center gap-3">
+            <img 
+              src="/logo.png" 
+              alt="Logo EDEMSA" 
+              className="h-10 w-auto object-contain"
+            />
             <div>
               <div className="font-display text-lg font-semibold leading-none">EDEMSA TIC INVENTARIO</div>
               <div className="text-xs text-muted-foreground leading-tight">Sistema de gestión de inventario TIC</div>
@@ -66,8 +62,12 @@ export default function Login() {
         {/* Form panel */}
         <div className="flex items-center justify-center p-6">
           <Card className="w-full max-w-md p-6 md:p-8 shadow-sm border-border">
-            <div className="flex items-center gap-2 lg:hidden mb-4">
-              <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground"><Package size={16} /></div>
+            <div className="flex items-center gap-3 lg:hidden mb-4">
+              <img 
+                src="/logo.png" 
+                alt="Logo EDEMSA" 
+                className="h-8 w-auto object-contain"
+              />
               <div className="font-display font-semibold">EDEMSA TIC INVENTARIO</div>
             </div>
             <h2 className="font-display text-2xl font-semibold">Iniciar sesión</h2>
