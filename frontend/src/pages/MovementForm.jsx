@@ -4,6 +4,7 @@ import { ArrowDownRight, ArrowUpRight, SlidersHorizontal, Loader2, Check, ArrowL
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
@@ -57,11 +58,13 @@ export default function MovementForm({ type }) {
   const [destination, setDestination] = useState("");
   const [requester, setRequester] = useState("");
 
-  // Datos detallados para entregas
+  // Campos para salida / asignación detallada
   const [recipientName, setRecipientName] = useState("");
   const [recipientDocument, setRecipientDocument] = useState("");
   const [department, setDepartment] = useState("");
   const [serialNumber, setSerialNumber] = useState("");
+  const [placa, setPlaca] = useState("");
+  const [deviceName, setDeviceName] = useState("");
   const [condition, setCondition] = useState("Bueno");
 
   const [loading, setLoading] = useState(false);
@@ -133,6 +136,8 @@ export default function MovementForm({ type }) {
           recipient_document: recipientDocument || undefined,
           department: department || undefined,
           serial_number: serialNumber || undefined,
+          placa: placa || undefined,
+          device_name: deviceName || undefined,
           condition: condition || "Bueno",
         };
       }
@@ -331,7 +336,23 @@ export default function MovementForm({ type }) {
                     <Input
                       value={serialNumber}
                       onChange={(e) => setSerialNumber(e.target.value)}
-                      placeholder="Ej. S/N: MXL123456"
+                      placeholder="Ej. MXL123456"
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Placa de Inventario</Label>
+                    <Input
+                      value={placa}
+                      onChange={(e) => setPlaca(e.target.value)}
+                      placeholder="Ej. EDEMSA-ACT-0492"
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Nombre del Equipo (Hostname)</Label>
+                    <Input
+                      value={deviceName}
+                      onChange={(e) => setDeviceName(e.target.value)}
+                      placeholder="Ej. LAP-GH-01"
                     />
                   </div>
                   <div className="grid gap-1.5">
@@ -361,7 +382,7 @@ export default function MovementForm({ type }) {
 
             <div className="grid gap-1.5">
               <Label>Notas / Accesorios incluidos</Label>
-              <textarea
+              <Textarea
                 rows={2}
                 className="w-full p-2.5 rounded-md border border-input bg-background text-sm font-sans"
                 value={notes}

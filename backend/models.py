@@ -200,6 +200,8 @@ class MovementOut(BaseModel):
     department: Optional[str] = None
     serial_number: Optional[str] = None
     condition: Optional[str] = None
+    placa: Optional[str] = None
+    device_name: Optional[str] = None
     location_id: Optional[str] = None
     location_name: Optional[str] = None
     unit_cost: Optional[float] = None
@@ -254,3 +256,5 @@ class CountOut(BaseModel):
     created_at: str
     closed_at: Optional[str] = None
     items: List[dict] = []
+
+    

@@ -110,6 +110,8 @@ async def register_entry(payload: EntryCreate, user: dict = Depends(require_perm
         "reference": payload.reference,
         "supplier_id": payload.supplier_id,
         "supplier_name": await _resolve_supplier_name(payload.supplier_id),
+        "placa": getattr(payload, "placa", None),
+        "device_name": getattr(payload, "device_name", None),
         "location_id": p.get("location_id"),
         "location_name": await _resolve_location_name(p.get("location_id")),
         "unit_cost": payload.unit_cost,
