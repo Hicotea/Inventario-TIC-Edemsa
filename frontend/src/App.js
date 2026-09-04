@@ -23,6 +23,7 @@ import Users from "@/pages/Users";
 import Alerts from "@/pages/Alerts";
 import Audit from "@/pages/Audit";
 import Reports from "@/pages/Reports";
+import Salidas from "@/pages/Salidas";
 import ImportProducts from "@/pages/ImportProducts";
 import Counts from "@/pages/Counts";
 import CountSession from "@/pages/CountSession";
@@ -66,6 +67,7 @@ function Boot() {
         <Route path="/alerts" element={<Alerts />} />
         <Route path="/audit" element={<Audit />} />
         <Route path="/reports" element={<Reports />} />
+        <Route path="/salidas" element={<Salidas />} />
         <Route path="/import" element={<ImportProducts />} />
         <Route path="/counts" element={<Counts />} />
         <Route path="/counts/:id" element={<CountSession />} />

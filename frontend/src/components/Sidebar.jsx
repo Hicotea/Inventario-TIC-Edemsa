@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import {
-  LayoutDashboard, Package, ArrowRightLeft, ScanLine, Bell, ClipboardList,
+  LayoutDashboard, Package, ArrowRightLeft, UserCheck, ScanLine, Bell, ClipboardList,
   FileBarChart, Upload, Tags, Building2, MapPin, Users, ShieldCheck, Settings2, Boxes
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ const PRIMARY = [
   { to: "/dashboard", key: "dashboard", label: "Panel principal", icon: LayoutDashboard, perm: null },
   { to: "/products", key: "products", label: "Productos", icon: Package, perm: "product:read" },
   { to: "/movements", key: "movements", label: "Movimientos", icon: ArrowRightLeft, perm: "movement:read" },
+  { to: "/salidas", key: "salidas", label: "Salidas / Entregas", icon: UserCheck, perm: "movement:read" },
   { to: "/scanner", key: "scanner", label: "Escáner", icon: ScanLine, perm: "product:read" },
   { to: "/alerts", key: "alerts", label: "Alertas", icon: Bell, perm: "product:read" },
   { to: "/counts", key: "counts", label: "Inventario físico", icon: ClipboardList, perm: "count:read" },
