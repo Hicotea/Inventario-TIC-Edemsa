@@ -4,7 +4,6 @@ import { ArrowDownRight, ArrowUpRight, SlidersHorizontal, Loader2, Check, ArrowL
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
@@ -58,7 +57,7 @@ export default function MovementForm({ type }) {
   const [destination, setDestination] = useState("");
   const [requester, setRequester] = useState("");
 
-  // Campos para salida / asignación detallada
+  // Campos para salidas/asignaciones detalladas
   const [recipientName, setRecipientName] = useState("");
   const [recipientDocument, setRecipientDocument] = useState("");
   const [department, setDepartment] = useState("");
@@ -245,11 +244,11 @@ export default function MovementForm({ type }) {
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label>Referencia / N° documento</Label>
+                  <Label>Referencia / N° documento / Acta</Label>
                   <Input
                     value={reference}
                     onChange={(e) => setReference(e.target.value)}
-                    placeholder="OC-1024, ACTA-001…"
+                    placeholder="Ej. ACTA-001, OC-1024…"
                   />
                 </div>
               </div>
@@ -304,7 +303,7 @@ export default function MovementForm({ type }) {
             {type === "exit" && (
               <div className="space-y-4 border-t border-border pt-4 mt-2">
                 <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Datos de asignación y hardware
+                  Datos de Asignación y Hardware
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="grid gap-1.5">
@@ -328,7 +327,7 @@ export default function MovementForm({ type }) {
                     <Input
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
-                      placeholder="Ej. Gestión Humana / TI"
+                      placeholder="Ej. Gestión Humana / Operaciones"
                     />
                   </div>
                   <div className="grid gap-1.5">
@@ -382,7 +381,7 @@ export default function MovementForm({ type }) {
 
             <div className="grid gap-1.5">
               <Label>Notas / Accesorios incluidos</Label>
-              <Textarea
+              <textarea
                 rows={2}
                 className="w-full p-2.5 rounded-md border border-input bg-background text-sm font-sans"
                 value={notes}
