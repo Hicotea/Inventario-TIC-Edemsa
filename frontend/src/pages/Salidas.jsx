@@ -32,7 +32,7 @@ export default function Salidas() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Salidas y Asignaciones de Equipos</h1>
           <p className="text-sm text-muted-foreground">
-            Registro detallado de hardware, componentes y activos entregados a funcionarios de EDEMSA.
+            Registro detallado de hardware, activos y equipos entregados al personal de EDEMSA.
           </p>
         </div>
         <Button onClick={fetchExits} variant="outline" size="sm" className="gap-2">
@@ -43,7 +43,7 @@ export default function Salidas() {
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar por funcionario, cédula, placa, serie, equipo o área..."
+          placeholder="Buscar por funcionario, cédula, placa, equipo, serie o área..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="pl-9"
@@ -56,24 +56,24 @@ export default function Salidas() {
             <thead className="bg-muted/60 text-xs uppercase text-muted-foreground border-b border-border">
               <tr>
                 <th className="p-3">Fecha y Hora</th>
-                <th className="p-3">Equipo / Producto</th>
+                <th className="p-3">Producto / Cantidad</th>
                 <th className="p-3">Funcionario / Área</th>
-                <th className="p-3">Datos del Hardware</th>
+                <th className="p-3">Datos del Hardware (Serie, Placa, Equipo)</th>
                 <th className="p-3">Ubicación y Ref.</th>
-                <th className="p-3">Despacho y Notas</th>
+                <th className="p-3">Despachado Por</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                    Cargando historial de salidas…
+                    Cargando entregas…
                   </td>
                 </tr>
               ) : movements.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                    No hay registros de salidas detalladas.
+                    No hay registros de salidas encontradas.
                   </td>
                 </tr>
               ) : (
@@ -112,7 +112,7 @@ export default function Salidas() {
                     </td>
 
                     {/* Hardware: S/N, Placa, Hostname, Estado */}
-                    <td className="p-3 space-y-0.5">
+                    <td className="p-3 space-y-1">
                       {mv.serial_number ? (
                         <div className="font-mono text-xs text-foreground font-medium">
                           S/N: {mv.serial_number}
@@ -128,12 +128,12 @@ export default function Salidas() {
                       )}
 
                       {mv.device_name && (
-                        <div className="text-xs text-muted-foreground font-mono flex items-center gap-1">
-                          <Laptop size={12} /> {mv.device_name}
+                        <div className="text-xs text-emerald-700 dark:text-emerald-400 font-mono flex items-center gap-1">
+                          <Laptop size={12} /> Equipo: {mv.device_name}
                         </div>
                       )}
 
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-[11px] text-muted-foreground">
                         Estado: <strong className="text-foreground">{mv.condition || "Bueno"}</strong>
                       </div>
                     </td>
