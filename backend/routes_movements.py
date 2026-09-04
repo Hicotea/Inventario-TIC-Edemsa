@@ -67,6 +67,8 @@ async def list_movements(
             {"recipient_document": {"$regex": q, "$options": "i"}},
             {"department": {"$regex": q, "$options": "i"}},
             {"serial_number": {"$regex": q, "$options": "i"}},
+            {"placa": {"$regex": q, "$options": "i"}},
+            {"device_name": {"$regex": q, "$options": "i"}},
         ]
     if date_from or date_to:
         query["created_at"] = {}
@@ -110,8 +112,6 @@ async def register_entry(payload: EntryCreate, user: dict = Depends(require_perm
         "reference": payload.reference,
         "supplier_id": payload.supplier_id,
         "supplier_name": await _resolve_supplier_name(payload.supplier_id),
-        "placa": getattr(payload, "placa", None),
-        "device_name": getattr(payload, "device_name", None),
         "location_id": p.get("location_id"),
         "location_name": await _resolve_location_name(p.get("location_id")),
         "unit_cost": payload.unit_cost,
@@ -128,7 +128,6 @@ async def register_exit(payload: ExitCreate, user: dict = Depends(require_perm("
         raise HTTPException(400, detail="La cantidad debe ser mayor que cero.")
     p = await _load_product(payload.product_id)
 
-    # Decremento condicional atómico — barrera para evitar sobreventa
     updated = await db.products.find_one_and_update(
         {"id": payload.product_id, "stock": {"$gte": payload.qty}},
         {"$inc": {"stock": -payload.qty}, "$set": {"updated_at": now_iso()}},
@@ -140,8 +139,6 @@ async def register_exit(payload: ExitCreate, user: dict = Depends(require_perm("
         raise HTTPException(400, detail=f"Stock insuficiente. Disponible: {cur}, solicitado: {payload.qty}.")
 
     previous_stock = updated["stock"] + payload.qty
-    
-    # Extraer variables con retrocompatibilidad
     recipient = getattr(payload, "recipient_name", None) or payload.requester
 
     mv = {
@@ -160,12 +157,13 @@ async def register_exit(payload: ExitCreate, user: dict = Depends(require_perm("
         "reference": payload.reference,
         "destination": payload.destination,
         "requester": recipient,
-        # Campos de trazabilidad detallada
         "recipient_name": recipient,
         "recipient_document": getattr(payload, "recipient_document", None),
         "department": getattr(payload, "department", None),
         "serial_number": getattr(payload, "serial_number", None),
         "condition": getattr(payload, "condition", None) or "Bueno",
+        "placa": getattr(payload, "placa", None),
+        "device_name": getattr(payload, "device_name", None),
         "location_id": p.get("location_id"),
         "location_name": await _resolve_location_name(p.get("location_id")),
         "created_at": now_iso(),
@@ -175,7 +173,9 @@ async def register_exit(payload: ExitCreate, user: dict = Depends(require_perm("
         "product": p["sku"], 
         "qty": payload.qty, 
         "recipient": recipient,
-        "serial_number": getattr(payload, "serial_number", None)
+        "serial_number": getattr(payload, "serial_number", None),
+        "placa": getattr(payload, "placa", None),
+        "device_name": getattr(payload, "device_name", None)
     })
     return mv
 
