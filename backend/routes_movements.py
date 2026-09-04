@@ -62,6 +62,11 @@ async def list_movements(
             {"product_name": {"$regex": q, "$options": "i"}},
             {"reason": {"$regex": q, "$options": "i"}},
             {"reference": {"$regex": q, "$options": "i"}},
+            {"requester": {"$regex": q, "$options": "i"}},
+            {"recipient_name": {"$regex": q, "$options": "i"}},
+            {"recipient_document": {"$regex": q, "$options": "i"}},
+            {"department": {"$regex": q, "$options": "i"}},
+            {"serial_number": {"$regex": q, "$options": "i"}},
         ]
     if date_from or date_to:
         query["created_at"] = {}
@@ -133,6 +138,10 @@ async def register_exit(payload: ExitCreate, user: dict = Depends(require_perm("
         raise HTTPException(400, detail=f"Stock insuficiente. Disponible: {cur}, solicitado: {payload.qty}.")
 
     previous_stock = updated["stock"] + payload.qty
+    
+    # Extraer variables con retrocompatibilidad
+    recipient = getattr(payload, "recipient_name", None) or payload.requester
+
     mv = {
         "id": uid(),
         "type": "exit",
@@ -148,13 +157,24 @@ async def register_exit(payload: ExitCreate, user: dict = Depends(require_perm("
         "notes": payload.notes,
         "reference": payload.reference,
         "destination": payload.destination,
-        "requester": payload.requester,
+        "requester": recipient,
+        # Campos de trazabilidad detallada
+        "recipient_name": recipient,
+        "recipient_document": getattr(payload, "recipient_document", None),
+        "department": getattr(payload, "department", None),
+        "serial_number": getattr(payload, "serial_number", None),
+        "condition": getattr(payload, "condition", None) or "Bueno",
         "location_id": p.get("location_id"),
         "location_name": await _resolve_location_name(p.get("location_id")),
         "created_at": now_iso(),
     }
     await db.inventory_movements.insert_one(mv)
-    await write_audit(user, "movement.exit", "movement", mv["id"], {"product": p["sku"], "qty": payload.qty})
+    await write_audit(user, "movement.exit", "movement", mv["id"], {
+        "product": p["sku"], 
+        "qty": payload.qty, 
+        "recipient": recipient,
+        "serial_number": getattr(payload, "serial_number", None)
+    })
     return mv
 
 

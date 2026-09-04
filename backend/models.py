@@ -162,6 +162,11 @@ class EntryCreate(MovementBase):
 class ExitCreate(MovementBase):
     destination: Optional[str] = None
     requester: Optional[str] = None
+    recipient_name: Optional[str] = None
+    recipient_document: Optional[str] = None
+    department: Optional[str] = None
+    serial_number: Optional[str] = None
+    condition: Optional[str] = "Bueno"
 
 
 class AdjustmentCreate(BaseModel):
@@ -190,6 +195,11 @@ class MovementOut(BaseModel):
     supplier_name: Optional[str] = None
     destination: Optional[str] = None
     requester: Optional[str] = None
+    recipient_name: Optional[str] = None
+    recipient_document: Optional[str] = None
+    department: Optional[str] = None
+    serial_number: Optional[str] = None
+    condition: Optional[str] = None
     location_id: Optional[str] = None
     location_name: Optional[str] = None
     unit_cost: Optional[float] = None
