@@ -1,459 +1,203 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowDownRight, ArrowUpRight, SlidersHorizontal, Loader2, Check, ArrowLeft } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowDownRight, ArrowUpRight, SlidersHorizontal, Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import PageHeader from "@/components/PageHeader";
-import StatusBadge from "@/components/StatusBadge";
-import { api, showError, showSuccess } from "@/lib/api";
-import { TID } from "@/lib/testIds";
-import { formatNumber } from "@/lib/format";
+import { api, showError } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
-const CFG = {
-  entry: {
-    title: "Registrar entrada de inventario",
-    subtitle: "Agregue unidades al stock de un producto.",
-    endpoint: "/movements/entry",
-    icon: ArrowDownRight,
-    color: "text-emerald-600",
-    reasons: ["Compra", "Devolución", "Traslado entrante", "Corrección", "Stock inicial", "Otro"],
-  },
-  exit: {
-    title: "Registrar salida de inventario",
-    subtitle: "Retire unidades para uso, traslado o asignación a personal.",
-    endpoint: "/movements/exit",
-    icon: ArrowUpRight,
-    color: "text-rose-600",
-    reasons: ["Solicitud de empleado", "Consumo", "Traslado saliente", "Reemplazo", "Devolución al proveedor", "Otro"],
-  },
-  adjustment: {
-    title: "Ajustar stock",
-    subtitle: "Corrija el stock del sistema para que coincida con la realidad.",
-    endpoint: "/movements/adjustment",
-    icon: SlidersHorizontal,
-    color: "text-amber-600",
-    reasons: ["Discrepancia de inventario físico", "Dañado", "Perdido", "Encontrado", "Corrección administrativa"],
-  },
-};
+function TypeBadge({ type }) {
+  const cfg = {
+    entry: { label: "Entrada", cls: "text-emerald-700 bg-emerald-50 border-emerald-200", icon: ArrowDownRight },
+    exit: { label: "Salida", cls: "text-rose-700 bg-rose-50 border-rose-200", icon: ArrowUpRight },
+    adjustment: { label: "Ajuste", cls: "text-amber-700 bg-amber-50 border-amber-200", icon: SlidersHorizontal },
+  }[type] || { label: type, cls: "text-gray-700 bg-gray-50 border-gray-200", icon: SlidersHorizontal };
 
-export default function MovementForm({ type }) {
-  const cfg = CFG[type] || CFG.exit;
-  const [params] = useSearchParams();
+  const Icon = cfg.icon;
+  return (
+    <span className={`inline-flex items-center gap-1 border px-2.5 py-0.5 rounded-full text-xs font-medium ${cfg.cls}`}>
+      <Icon size={12} />
+      {cfg.label}
+    </span>
+  );
+}
+
+export default function Movements() {
+  const [type, setType] = useState("all");
+  const [q, setQ] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  const auth = useAuth();
   const navigate = useNavigate();
 
-  const [products, setProducts] = useState([]);
-  const [suppliers, setSuppliers] = useState([]);
-  const [productId, setProductId] = useState(params.get("product") || "");
-  const [product, setProduct] = useState(null);
-  const [qty, setQty] = useState("1");
-  const [newStock, setNewStock] = useState("");
-  const [reason, setReason] = useState("");
-  const [notes, setNotes] = useState("");
-  const [reference, setReference] = useState("");
-  const [supplierId, setSupplierId] = useState("");
-  const [unitCost, setUnitCost] = useState("");
-  const [destination, setDestination] = useState("");
-  const [requester, setRequester] = useState("");
+  const canMove = auth?.hasPerm ? auth.hasPerm("movement:write") : true;
 
-  // Campos para salidas/asignaciones detalladas
-  const [recipientName, setRecipientName] = useState("");
-  const [recipientDocument, setRecipientDocument] = useState("");
-  const [department, setDepartment] = useState("");
-  const [serialNumber, setSerialNumber] = useState("");
-  const [placa, setPlaca] = useState("");
-  const [deviceName, setDeviceName] = useState("");
-  const [condition, setCondition] = useState("Bueno");
-
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    api.get("/products", { params: { limit: 500 } })
-      .then((r) => setProducts(r.data || []))
-      .catch((err) => showError(err));
-
-    if (type === "entry") {
-      api.get("/suppliers")
-        .then((r) => setSuppliers(r.data || []))
-        .catch((err) => showError(err));
-    }
-  }, [type]);
-
-  useEffect(() => {
-    if (!productId) {
-      setProduct(null);
-      return;
-    }
-    api.get(`/products/${productId}`)
-      .then((r) => {
-        setProduct(r.data);
-        if (type === "adjustment") setNewStock(String(r.data.stock));
-      })
-      .catch(() => setProduct(null));
-  }, [productId, type]);
-
-  const canSubmit =
-    product &&
-    (type === "adjustment"
-      ? newStock !== "" && Number(newStock) >= 0 && Number(newStock) !== product.stock
-      : Number(qty) > 0);
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    if (!product) return;
+  const load = async () => {
     setLoading(true);
     try {
-      let body;
-      if (type === "adjustment") {
-        if (!reason || reason.trim().length < 3) {
-          throw Object.assign(new Error("El ajuste requiere motivo."), {
-            friendlyMessage: "El ajuste requiere un motivo de al menos 3 caracteres.",
-          });
-        }
-        body = { product_id: product.id, new_stock: Number(newStock), reason, notes: notes || undefined };
-      } else if (type === "entry") {
-        body = {
-          product_id: product.id,
-          qty: Number(qty),
-          reason: reason || undefined,
-          notes: notes || undefined,
-          reference: reference || undefined,
-          supplier_id: supplierId || undefined,
-          unit_cost: unitCost ? Number(unitCost) : undefined,
-        };
-      } else {
-        body = {
-          product_id: product.id,
-          qty: Number(qty),
-          reason: reason || undefined,
-          notes: notes || undefined,
-          reference: reference || undefined,
-          destination: destination || undefined,
-          requester: recipientName || requester || undefined,
-          recipient_name: recipientName || requester || undefined,
-          recipient_document: recipientDocument || undefined,
-          department: department || undefined,
-          serial_number: serialNumber || undefined,
-          placa: placa || undefined,
-          device_name: deviceName || undefined,
-          condition: condition || "Bueno",
-        };
-      }
-      const { data } = await api.post(cfg.endpoint, body);
-      showSuccess(`Movimiento registrado. Nuevo stock: ${formatNumber(data.resulting_stock, { maximumFractionDigits: 0 })}.`);
-      navigate(type === "exit" ? "/salidas" : "/movements");
-    } catch (err) {
-      showError(err);
+      const { data } = await api.get("/movements", {
+        params: {
+          type: type === "all" ? undefined : type,
+          q: q || undefined,
+          date_from: dateFrom || undefined,
+          date_to: dateTo || undefined,
+          limit: 500,
+        },
+      });
+      setItems(data || []);
+    } catch (e) {
+      showError(e);
+      setItems([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const Icon = cfg.icon;
+  useEffect(() => {
+    const timer = setTimeout(load, 250);
+    return () => clearTimeout(timer);
+  }, [type, q, dateFrom, dateTo]);
+
+  const safeDate = (iso) => {
+    if (!iso) return "—";
+    try {
+      return new Date(iso).toLocaleString("es-CO");
+    } catch {
+      return iso;
+    }
+  };
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
-        title={cfg.title}
-        description={cfg.subtitle}
-        breadcrumb={[{ label: "Movimientos", to: "/movements" }, { label: cfg.title }]}
+        title="Historial de Movimientos"
+        description="Consulta general de todas las entradas, salidas y ajustes de stock."
+        breadcrumb={[{ label: "Inicio", to: "/" }, { label: "Movimientos" }]}
         actions={
-          <Button variant="outline" onClick={() => navigate(-1)}>
-            <ArrowLeft size={16} className="mr-2" />
-            Volver
-          </Button>
+          canMove && (
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate("/movements/entry")}>
+                <Plus size={14} className="mr-1 text-emerald-600" /> Entrada
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate("/movements/exit")}>
+                <Plus size={14} className="mr-1 text-rose-600" /> Salida
+              </Button>
+            </div>
+          )
         }
       />
 
-      <form onSubmit={onSubmit} className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="p-5 lg:col-span-2">
-          <div className={`inline-flex items-center gap-2 ${cfg.color}`}>
-            <Icon size={18} />
-            <span className="font-display text-sm font-semibold">Detalle del movimiento</span>
-          </div>
-
-          <div className="mt-4 grid gap-4">
-            {/* Selección de Producto */}
-            <div className="grid gap-1.5">
-              <Label htmlFor="productId">Producto *</Label>
-              <select
-                id="productId"
-                required
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                value={productId}
-                onChange={(e) => setProductId(e.target.value)}
+      <Card className="p-4 space-y-4">
+        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+          {/* Selector de tipo */}
+          <div className="inline-flex p-1 bg-muted rounded-lg text-xs font-medium">
+            {[
+              { id: "all", label: "Todos" },
+              { id: "entry", label: "Entradas" },
+              { id: "exit", label: "Salidas" },
+              { id: "adjustment", label: "Ajustes" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setType(tab.id)}
+                className={`px-3 py-1.5 rounded-md transition-colors ${
+                  type === tab.id ? "bg-background text-foreground shadow-sm font-semibold" : "text-muted-foreground hover:text-foreground"
+                }`}
               >
-                <option value="">-- Seleccione un producto --</option>
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.sku}) — Stock: {p.stock}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {product && (
-              <div className="rounded-lg border border-border bg-muted/30 p-3">
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="flex-1">Stock actual</div>
-                  <div className="tabular-nums text-lg font-semibold">
-                    {formatNumber(product.stock, { maximumFractionDigits: 0 })}
-                  </div>
-                  <StatusBadge status={product.status} />
-                </div>
-              </div>
-            )}
-
-            {type === "adjustment" ? (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-1.5">
-                  <Label>Nueva cantidad de stock</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={newStock}
-                    onChange={(e) => setNewStock(e.target.value)}
-                    data-testid={TID.movementQty}
-                    required
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label>Diferencia</Label>
-                  <div className="h-10 rounded-md border border-input bg-muted/50 px-3 text-sm inline-flex items-center tabular-nums">
-                    {product && newStock !== ""
-                      ? formatNumber(Number(newStock) - product.stock, {
-                          maximumFractionDigits: 0,
-                          signDisplay: "exceptZero",
-                        })
-                      : "—"}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-1.5">
-                  <Label>Cantidad</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={qty}
-                    onChange={(e) => setQty(e.target.value)}
-                    data-testid={TID.movementQty}
-                    required
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label>Referencia / N° documento / Acta</Label>
-                  <Input
-                    value={reference}
-                    onChange={(e) => setReference(e.target.value)}
-                    placeholder="Ej. ACTA-001, OC-1024…"
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="grid gap-1.5">
-              <Label>Motivo {type === "adjustment" && <span className="text-rose-600">*</span>}</Label>
-              <select
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-              >
-                <option value="">— Sin motivo</option>
-                {cfg.reasons.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {type === "entry" && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-1.5">
-                  <Label>Proveedor</Label>
-                  <select
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                    value={supplierId}
-                    onChange={(e) => setSupplierId(e.target.value)}
-                  >
-                    <option value="">— Sin proveedor</option>
-                    {suppliers.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="grid gap-1.5">
-                  <Label>Costo unitario</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={unitCost}
-                    onChange={(e) => setUnitCost(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
-
-            {type === "exit" && (
-              <div className="space-y-4 border-t border-border pt-4 mt-2">
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Datos de Asignación y Hardware
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="grid gap-1.5">
-                    <Label>Funcionario que recibe</Label>
-                    <Input
-                      value={recipientName}
-                      onChange={(e) => setRecipientName(e.target.value)}
-                      placeholder="Ej. Camilo Torres"
-                    />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label>Cédula / Documento</Label>
-                    <Input
-                      value={recipientDocument}
-                      onChange={(e) => setRecipientDocument(e.target.value)}
-                      placeholder="Ej. 1067000111"
-                    />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label>Departamento / Área</Label>
-                    <Input
-                      value={department}
-                      onChange={(e) => setDepartment(e.target.value)}
-                      placeholder="Ej. Gestión Humana / Operaciones"
-                    />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label>Número de Serie (S/N)</Label>
-                    <Input
-                      value={serialNumber}
-                      onChange={(e) => setSerialNumber(e.target.value)}
-                      placeholder="Ej. MXL123456"
-                    />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label>Placa de Inventario</Label>
-                    <Input
-                      value={placa}
-                      onChange={(e) => setPlaca(e.target.value)}
-                      placeholder="Ej. EDEMSA-ACT-0492"
-                    />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label>Nombre del Equipo (Hostname)</Label>
-                    <Input
-                      value={deviceName}
-                      onChange={(e) => setDeviceName(e.target.value)}
-                      placeholder="Ej. LAP-GH-01"
-                    />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label>Estado del equipo</Label>
-                    <select
-                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                      value={condition}
-                      onChange={(e) => setCondition(e.target.value)}
-                    >
-                      <option value="Nuevo">Nuevo</option>
-                      <option value="Bueno">Bueno</option>
-                      <option value="Regular">Regular</option>
-                      <option value="Mantenimiento">Mantenimiento</option>
-                    </select>
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label>Destino / Ubicación física</Label>
-                    <Input
-                      value={destination}
-                      onChange={(e) => setDestination(e.target.value)}
-                      placeholder="Ej. Piso 3, Oficina Principal"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="grid gap-1.5">
-              <Label>Notas / Accesorios incluidos</Label>
-              <textarea
-                rows={2}
-                className="w-full p-2.5 rounded-md border border-input bg-background text-sm font-sans"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Ej. Se entrega con cargador original, mouse y estuche..."
-              />
-            </div>
+                {tab.label}
+              </button>
+            ))}
           </div>
-        </Card>
 
-        <Card className="p-5 h-fit lg:sticky lg:top-20">
-          <div className="font-display text-sm font-semibold">¿Listo para enviar?</div>
-          <div className="mt-1 text-xs text-muted-foreground">Todos los movimientos son trazables.</div>
-          <div className="mt-4 grid gap-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Producto</span>
-              <span className="font-medium truncate max-w-[200px]">{product?.name || "—"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Stock actual</span>
-              <span className="tabular-nums">
-                {product ? formatNumber(product.stock, { maximumFractionDigits: 0 }) : "—"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Cambio</span>
-              <span className="tabular-nums font-medium">
-                {product
-                  ? formatNumber(
-                      type === "adjustment"
-                        ? newStock === ""
-                          ? 0
-                          : Number(newStock) - product.stock
-                        : type === "exit"
-                        ? -Number(qty || 0)
-                        : Number(qty || 0),
-                      { maximumFractionDigits: 0, signDisplay: "exceptZero" }
-                    )
-                  : "—"}
-              </span>
-            </div>
-            <div className="flex justify-between border-t border-border pt-2 mt-2">
-              <span className="text-muted-foreground">Resultante</span>
-              <span className="tabular-nums font-semibold">
-                {product
-                  ? formatNumber(
-                      type === "adjustment"
-                        ? newStock === ""
-                          ? product.stock
-                          : Number(newStock)
-                        : type === "exit"
-                        ? product.stock - Number(qty || 0)
-                        : product.stock + Number(qty || 0),
-                      { maximumFractionDigits: 0 }
-                    )
-                  : "—"}
-              </span>
-            </div>
+          {/* Buscador */}
+          <div className="relative flex-1 max-w-md">
+            <Search size={15} className="absolute left-3 top-2.5 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar por producto, SKU, cédula, serie o motivo..."
+              className="pl-9 h-9 text-sm"
+            />
           </div>
-          <Button type="submit" disabled={!canSubmit || loading} data-testid={TID.movementSubmit} className="mt-5 w-full h-11">
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 animate-spin" size={16} /> Enviando…
-              </>
-            ) : (
-              <>
-                <Check size={16} className="mr-2" /> Confirmar
-              </>
-            )}
-          </Button>
-        </Card>
-      </form>
+
+          {/* Filtro de Fechas */}
+          <div className="flex gap-2">
+            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-9 text-xs w-36" />
+            <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-9 text-xs w-36" />
+          </div>
+        </div>
+      </Card>
+
+      <Card className="overflow-hidden border border-border">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-muted/60 text-xs uppercase text-muted-foreground border-b border-border">
+              <tr>
+                <th className="p-3">Fecha y hora</th>
+                <th className="p-3">Tipo</th>
+                <th className="p-3">Producto</th>
+                <th className="p-3 text-right">Cant.</th>
+                <th className="p-3 text-right">Stock Ant.</th>
+                <th className="p-3 text-right">Stock Res.</th>
+                <th className="p-3">Detalle / Asignación</th>
+                <th className="p-3">Usuario</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-muted-foreground">Cargando movimientos...</td>
+                </tr>
+              ) : items.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-muted-foreground">No se encontraron movimientos registrados.</td>
+                </tr>
+              ) : (
+                items.map((h) => (
+                  <tr key={h.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="p-3 whitespace-nowrap text-xs text-muted-foreground font-mono">
+                      {safeDate(h.created_at)}
+                    </td>
+                    <td className="p-3 whitespace-nowrap">
+                      <TypeBadge type={h.type} />
+                    </td>
+                    <td className="p-3">
+                      <Link to={`/products/${h.product_id}`} className="font-semibold text-foreground hover:underline">
+                        {h.product_name}
+                      </Link>
+                      <div className="font-mono text-xs text-muted-foreground">{h.product_sku}</div>
+                    </td>
+                    <td className="p-3 text-right font-medium tabular-nums">{h.qty}</td>
+                    <td className="p-3 text-right text-muted-foreground tabular-nums">{h.previous_stock ?? "—"}</td>
+                    <td className="p-3 text-right font-semibold tabular-nums text-foreground">{h.resulting_stock ?? "—"}</td>
+                    <td className="p-3 text-xs">
+                      {h.type === "exit" && (h.recipient_name || h.serial_number || h.placa || h.device_name) ? (
+                        <div className="space-y-0.5 bg-muted/40 p-2 rounded border border-border/50">
+                          {h.recipient_name && <div><strong>A:</strong> {h.recipient_name} {h.recipient_document ? `(${h.recipient_document})` : ''}</div>}
+                          {h.department && <div><strong>Área:</strong> {h.department}</div>}
+                          {h.serial_number && <div><strong>S/N:</strong> <span className="font-mono">{h.serial_number}</span></div>}
+                          {h.placa && <div><strong>Placa:</strong> <span className="font-mono text-blue-600">{h.placa}</span></div>}
+                          {h.device_name && <div><strong>Equipo:</strong> <span className="font-mono">{h.device_name}</span></div>}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">{h.reason || "—"}</span>
+                      )}
+                    </td>
+                    <td className="p-3 text-xs text-muted-foreground">
+                      {h.user_name || h.user_id}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
     </div>
   );
 }

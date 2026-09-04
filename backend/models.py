@@ -167,6 +167,8 @@ class ExitCreate(MovementBase):
     department: Optional[str] = None
     serial_number: Optional[str] = None
     condition: Optional[str] = "Bueno"
+    placa: Optional[str] = None
+    device_name: Optional[str] = None
 
 
 class AdjustmentCreate(BaseModel):
@@ -256,5 +258,3 @@ class CountOut(BaseModel):
     created_at: str
     closed_at: Optional[str] = None
     items: List[dict] = []
-
-    
